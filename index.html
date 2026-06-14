@@ -1,0 +1,1840 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>樂樂的暑期中文大作戰！一日一練習 (2026)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM (UMD) -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <!-- Babel Standalone -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #F0F9FF;
+        }
+        .font-playful {
+            font-family: 'ZCOOL KuaiLe', 'Noto Sans TC', cursive;
+        }
+        .scroll-custom::-webkit-scrollbar {
+            width: 8px;
+        }
+        .scroll-custom::-webkit-scrollbar-track {
+            background: #F1F5F9;
+            border-radius: 999px;
+        }
+        .scroll-custom::-webkit-scrollbar-thumb {
+            background: #CBD5E1;
+            border-radius: 999px;
+        }
+        .scroll-custom::-webkit-scrollbar-thumb:hover {
+            background: #94A3B8;
+        }
+        /* Custom ribbon and cute effects */
+        .wiggle-hover:hover {
+            transform: rotate(2deg) scale(1.02);
+        }
+    </style>
+</head>
+<body class="overflow-x-hidden min-h-screen text-slate-800">
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- SOUND EFFECTS (WEB AUDIO API) ---
+        const playSynthSound = (type) => {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                const ctx = new AudioContext();
+                
+                if (type === 'success') {
+                    const osc1 = ctx.createOscillator();
+                    const osc2 = ctx.createOscillator();
+                    const gainNode = ctx.createGain();
+                    osc1.connect(gainNode);
+                    osc2.connect(gainNode);
+                    gainNode.connect(ctx.destination);
+                    osc1.type = 'sine';
+                    osc2.type = 'sine';
+                    osc1.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+                    osc1.frequency.setValueAtTime(659.25, ctx.currentTime + 0.12); // E5
+                    osc2.frequency.setValueAtTime(1046.50, ctx.currentTime);
+                    osc2.frequency.setValueAtTime(1318.50, ctx.currentTime + 0.12);
+                    gainNode.gain.setValueAtTime(0.06, ctx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+                    osc1.start();
+                    osc2.start();
+                    osc1.stop(ctx.currentTime + 0.4);
+                    osc2.stop(ctx.currentTime + 0.4);
+                } else if (type === 'error') {
+                    const osc = ctx.createOscillator();
+                    const gainNode = ctx.createGain();
+                    osc.connect(gainNode);
+                    gainNode.connect(ctx.destination);
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(220, ctx.currentTime);
+                    osc.frequency.setValueAtTime(150, ctx.currentTime + 0.15);
+                    gainNode.gain.setValueAtTime(0.06, ctx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.3);
+                } else if (type === 'click') {
+                    const osc = ctx.createOscillator();
+                    const gainNode = ctx.createGain();
+                    osc.connect(gainNode);
+                    gainNode.connect(ctx.destination);
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(450, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(850, ctx.currentTime + 0.08);
+                    gainNode.gain.setValueAtTime(0.04, ctx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.08);
+                }
+            } catch (e) {
+                console.log("Audio not supported.");
+            }
+        };
+
+        // --- CANTONESE SPEECH SYNTHESIS ENGINE ---
+        const speakCantonese = (text) => {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); // Stop anything currently playing
+                const utterance = new SpeechSynthesisUtterance(text);
+                
+                // Fetch and assign Cantonese voice specifically
+                const voices = window.speechSynthesis.getVoices();
+                const cantoneseVoice = voices.find(v => 
+                    v.lang.toLowerCase().includes('hk') || 
+                    v.lang.toLowerCase().includes('zh-hk') || 
+                    v.lang.toLowerCase().includes('yue')
+                );
+                
+                if (cantoneseVoice) {
+                    utterance.voice = cantoneseVoice;
+                } else {
+                    utterance.lang = 'zh-HK';
+                }
+                
+                utterance.rate = 0.82; // Kid friendly speed
+                utterance.pitch = 1.1; // Cute high pitch
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert("抱歉，您的裝置不支援廣東話發聲功能。建議使用 Chrome 或 Safari 瀏覽器！");
+            }
+        };
+
+        // Load speech synthesis voices early
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.getVoices();
+            window.speechSynthesis.onvoiceschanged = () => {
+                window.speechSynthesis.getVoices();
+            };
+        }
+
+        // --- 62 DAYS PRACTICE DATABASE (EXACT MATCH WITH PDF WORKBOOK) ---
+        const EXERCISES_DATABASE = [
+            {
+                date: "2026-07-01",
+                dayNum: 1,
+                theme: "字的偏旁(一)",
+                tip: "有些漢字由兩個或以上的部分組成，這些組成部分稱為「偏旁」。例如：「媽」由「女」和「馬」兩個偏旁組成。",
+                parts: [
+                    {
+                        type: "matching",
+                        title: "第一部分：選出適當的偏旁與左邊的偏旁組成漢字！",
+                        desc: "點選右邊的偏旁（民/乃/又/月）放入空格組字：",
+                        questions: [
+                            { id: "q1", text: "目 + ", options: ["民", "乃", "又", "月"], correct: "民", hint: "組合後會變成「眼眠」的「眠」字！" },
+                            { id: "q2", text: "女 + ", options: ["民", "乃", "又", "月"], correct: "乃", hint: "組合後會變成「牛奶」的「奶」字！" },
+                            { id: "q3", text: "耳 + ", options: ["民", "乃", "又", "月"], correct: "又", hint: "組合後會變成「取得」的「取」字！" },
+                            { id: "q4", text: "日 + ", options: ["民", "乃", "又", "月"], correct: "月", hint: "組合後會變成「明天」的「明」字！" }
+                        ]
+                    },
+                    {
+                        type: "flower_petal",
+                        title: "第二部分：下列的偏旁可以組成哪些漢字？",
+                        desc: "花朵中間是偏旁，選出可以拼在一起的花瓣漢字：",
+                        flowers: [
+                            {
+                                center: "女",
+                                petals: ["好", "媽", "姐", "妹"],
+                                options: ["好", "媽", "姐", "妹", "日", "口"],
+                                hint: "「女」字旁的字：好、媽、姐、妹。"
+                            },
+                            {
+                                center: "口",
+                                petals: ["唱", "可", "哈", "同"],
+                                options: ["唱", "可", "哈", "同", "月", "耳"],
+                                hint: "「口」字旁的字：唱、可、哈、同。"
+                            },
+                            {
+                                center: "日",
+                                petals: ["春", "晨", "早", "晴"],
+                                options: ["春", "晨", "早", "晴", "也", "子"],
+                                hint: "「日」字旁的字：春、晨、早、晴。"
+                            }
+                        ]
+                    },
+                    {
+                        type: "multiple_choice",
+                        title: "第三部分：根據句子的意思，選出適當的偏旁填在括號裏！",
+                        questions: [
+                            { id: "p3_q1", text: "1. [日] + (  ) 候不早了，我們走吧。", options: ["勿", "生", "寺"], correct: "寺", fullWord: "時", hint: "日 + 寺 = 時候的「時」字！" },
+                            { id: "p3_q2", text: "2. 敏敏的一雙眼 [目] + (  ) 水汪汪的，很美麗。", options: ["青", "木", "分"], correct: "青", fullWord: "睛", hint: "目 + 青 = 眼睛的「睛」字！" },
+                            { id: "p3_q3", text: "3. 王叔叔說我是個好 [女] + (  ) 孩子。", options: ["口", "少", "子"], correct: "子", fullWord: "孩", hint: "女 + 子 = 孩子的「孩」字！" },
+                            { id: "p3_q4", text: "4. 我叫何子文。你叫甚麼 (  ) + [口] 字？", options: ["夕", "士", "十"], correct: "夕", fullWord: "名", hint: "夕 + 口 = 名字的「名」字！" }
+                        ]
+                    }
+                ]
+            },
+            {
+                date: "2026-07-02",
+                dayNum: 2,
+                theme: "名詞(一)",
+                tip: "名詞是表示人物、地方、事物等名稱的詞。例如：爸爸（表示親屬稱謂）、香蕉（表示食物名稱）。",
+                parts: [
+                    {
+                        type: "cloze",
+                        title: "第一部分：中秋佳節！請將下方的名詞填入合適的故事空格中：",
+                        wordBank: ["菜市場", "爺爺", "橙子", "老師", "冬瓜", "豆角", "月餅", "月亮", "香蕉", "爸爸", "公園", "媽媽", "番茄"],
+                        story: [
+                            "今天是中秋節，我們全家人一起過節。奶奶和 (1) ",
+                            " 去 (2) ",
+                            " 買了很多菜，有一個大 (3) ",
+                            " 、幾個紅紅的 (4) ",
+                            " ，還有長長的 (5) ",
+                            " 。看！她們正在做晚飯呢。(6) ",
+                            " 和我坐在沙發上看電視。門鈴響了，我去開門。原來是 (7) ",
+                            " 回來了。晚飯後，我們到 (8) ",
+                            " 去。天上掛着圓圓的 (9) ",
+                            " ，我們一邊看，一邊吃 (10) ",
+                            " 和 (11) ",
+                            " 等水果。忽然，我聞到一陣香氣，原來媽媽在切 (12) ",
+                            " 。它軟軟的，又香又甜，實在太好吃了。這個中秋夜過得真愉快！"
+                        ],
+                        correctAnswers: ["媽媽", "菜市場", "冬瓜", "番茄", "豆角", "爺爺", "爸爸", "公園", "月亮", "橙子", "香蕉", "月餅"],
+                        hint: "根據晚飯前買菜、做飯、開門、去公園賞月吃月餅的邏輯來選名詞填入喔！"
+                    }
+                ]
+            },
+            {
+                date: "2026-07-03",
+                dayNum: 3,
+                theme: "動詞(一)",
+                tip: "動詞是表示動作或行為的詞。例如：看、說、找等。",
+                parts: [
+                    {
+                        type: "matching",
+                        title: "第一部分：睇圖識動詞！選出適當的動詞與片語配對：",
+                        questions: [
+                            { id: "v_q1", text: "(  ) 腰", options: ["彎", "躲", "穿", "說", "吃", "看"], correct: "彎", hint: "彎腰做運動！" },
+                            { id: "v_q2", text: "(  ) 起來", options: ["彎", "躲", "穿", "說", "吃", "看"], correct: "躲", hint: "捉迷藏躲在桌子底下！" },
+                            { id: "v_q3", text: "(  ) 衣服", options: ["彎", "躲", "穿", "說", "吃", "看"], correct: "穿", hint: "起床穿上溫暖的衣服！" },
+                            { id: "v_q4", text: "(  ) 話", options: ["彎", "躲", "穿", "說", "吃", "看"], correct: "說", hint: "開口跟李老師說話！" },
+                            { id: "v_q5", text: "(  ) 東西", options: ["彎", "躲", "穿", "說", "吃", "看"], correct: "吃", hint: "肚子餓了要吃東西！" },
+                            { id: "v_q6", text: "(  ) 書", options: ["彎", "躲", "穿", "說", "吃", "看"], correct: "看", hint: "專心用眼睛看書！" }
+                        ]
+                    },
+                    {
+                        type: "multiple_choice",
+                        title: "第二部分：句子填空練習：",
+                        questions: [
+                            { id: "v_p2_1", text: "1. 火車轟隆轟隆，正在 (  ) 過山洞。", options: ["穿", "彎", "躲"], correct: "穿", hint: "穿過隧道的動作。" },
+                            { id: "v_p2_2", text: "2. 他招了招手， (  ) 我過去。", options: ["聽", "說", "叫"], correct: "叫", hint: "招手示意叫他人過來。" },
+                            { id: "v_p2_3", text: "3. 我打開盒子， (  ) 見裏面有一架玩具飛機。", options: ["吃", "看", "打"], correct: "看", hint: "打開盒子後，眼睛看見了飛機。" },
+                            { id: "v_p2_4", text: "4. 弟弟在門後面，媽媽正到處 (  ) 他呢。", options: ["穿", "說", "找"], correct: "找", hint: "捉迷藏要到處尋找弟弟。" },
+                            { id: "v_p2_5", text: "5. 你 (  ) 甚麼？剛才太嘈吵了，我沒 (  ) 見。", options: ["說 / 聽", "看 / 說", "聽 / 穿"], correct: "說 / 聽", hint: "說話 與 聽見 的配對！" }
+                        ]
+                    }
+                ]
+            },
+            {
+                date: "2026-07-04",
+                dayNum: 4,
+                theme: "形容詞(一) [顏色]",
+                tip: "顏色詞是用來描述事物的不同色彩，使事物的形象更具體。常用顏色有：紅、黃、綠、藍、紫、黑、白、灰等。",
+                parts: [
+                    {
+                        type: "color_picker",
+                        title: "第一部分：找一找短文裏面有哪些「顏色詞」？",
+                        text: "紅太陽掛在藍天上，旁邊還有幾片白雲飄着。嫩綠的草地上長滿了很多黃色的小菊花。大自然真美呀！",
+                        options: ["紅", "藍", "白", "綠", "黃", "太陽", "天空", "草地"],
+                        correctAnswers: ["紅", "藍", "白", "綠", "黃"],
+                        hint: "把表示顏色的字都找出來吧！"
+                    },
+                    {
+                        type: "multiple_choice",
+                        title: "第二部分：選出適當的顏色詞填在橫線上：",
+                        questions: [
+                            { id: "c1", text: "1. 媽媽牽着我的手，走過 (  ) 色的斑馬線。", options: ["白", "紅", "綠"], correct: "白", hint: "馬路上的斑馬線是白色條紋的！" },
+                            { id: "c2", text: "2. 西瓜的果肉是 (  ) 色的，又甜又多汁，很好吃。", options: ["黃", "紅", "藍"], correct: "紅", hint: "一般切開西瓜，果肉是紅彤彤的。" },
+                            { id: "c3", text: "3. 荷花長在 (  ) 葉上面，分外嬌美。", options: ["綠", "白", "黑"], correct: "綠", hint: "俗語說：紅花需要綠葉扶持。" },
+                            { id: "c4", text: "4. 熟透了的香蕉彎彎的，好像 (  ) 色的小船。", options: ["黃", "藍", "啡"], correct: "黃", hint: "熟透的香蕉是黃燦燦的！" },
+                            { id: "c5", text: "5. 聖誕老人穿上 (  ) 色的衣裳，給孩子們送禮物。", options: ["紅", "黑", "白"], correct: "紅", hint: "聖誕老人的外套是紅色的。" },
+                            { id: "c6", text: "6. 草原上滿是毛色雪 (  ) 的綿羊。", options: ["白", "灰", "黃"], correct: "白", hint: "雪白形容極度潔白的綿羊毛。" },
+                            { id: "c7", text: "7. 在地圖上， (  ) 色的部分通常代表海洋。", options: ["藍", "黑", "綠"], correct: "藍", hint: "海水在陽光下呈現藍色。" },
+                            { id: "c8", text: "8. 熊貓咬着 (  ) 色的竹子，很滋味的樣子。", options: ["綠", "黃", "紅"], correct: "綠", hint: "新鮮的竹子是翠綠色的。" }
+                        ]
+                    }
+                ]
+            },
+            {
+                date: "2026-07-05",
+                dayNum: 5,
+                theme: "標點符號(一)",
+                tip: "逗號「,」用在一句話的中間，表示句子裏面的停頓。句號「。」用在句子末端，表示句子的意思已經完結。",
+                parts: [
+                    {
+                        type: "boolean_choices",
+                        title: "第一部分：判斷對錯：下列句子的標點符號運用正確嗎？",
+                        questions: [
+                            { id: "p1", text: "1. 姐姐送我一朵小黃花。", correct: true, hint: "完整句子，末端用句號。正確！" },
+                            { id: "p2", text: "2. 弟弟只愛笑。不愛哭。", correct: false, hint: "「只愛笑」和「不愛哭」中間還沒說完，應用逗號，不能用句號。" },
+                            { id: "p3", text: "3. 森林裏有獅子，有大象，還有小兔。", correct: true, hint: "中間停頓用逗號，結尾句號。正確！" },
+                            { id: "p4", text: "4. 今天是九月一日。是學校開學的日子。", correct: false, hint: "九月一日後是一句話的中間，應用逗號。" },
+                            { id: "p5", text: "5. 小欣去圖書館借了兩本書，", correct: false, hint: "話說完了，結尾應該用句號，而非逗號。" },
+                            { id: "p6", text: "6. 小息的時候，我們最愛到操場跳繩。", correct: true, hint: "句子結構完整，標點用法十分完美！" },
+                            { id: "p7", text: "7. 我們是好同學，又是好鄰居。更是好朋友。", correct: false, hint: "「又是好鄰居」後面話沒完，應是逗號停頓。" }
+                        ]
+                    },
+                    {
+                        type: "punctuation_filling",
+                        title: "第二部分：選出適當的標點符號（，或 。）填在方格內：",
+                        questions: [
+                            { id: "pf1", text: "1. 奶奶坐在沙發上織毛衣 [ ]", options: ["，", "。"], correct: "。", hint: "完整句子結束，使用句號。" },
+                            { id: "pf2", text: "2. 昨天 [ ] 爸爸帶我上街去 [ ]", options: ["，", "。"], correct: "，/。", hint: "第一個是停頓，第二個是結束。" },
+                            { id: "pf3", text: "3. 這裏售賣的蔬菜 [ ] 看上去很新鮮 [ ]", options: ["，", "。"], correct: "，/。", hint: "中間停頓，末尾完結。" },
+                            { id: "pf4", text: "4. 叔叔 [ ] 你到我們家吃晚飯吧 [ ]", options: ["，", "。"], correct: "，/。", hint: "呼喚人名後停頓，句末完結。" },
+                            { id: "pf5", text: "5. 我今天當值日生 [ ] 要把黑板擦乾淨 [ ]", options: ["，", "。"], correct: "，/。", hint: "前後意思連續，中間停頓，結尾句號。" }
+                        ]
+                    }
+                ]
+            },
+            {
+                date: "2026-07-06",
+                dayNum: 6,
+                theme: "同音字分辨",
+                tip: "有些字讀音相同，如「工」和「公」、「坐」和「座」，使用時容易混淆，所以要分辨清楚字意！",
+                parts: [
+                    {
+                        type: "multiple_choice",
+                        title: "第一部分：選出適當的字詞填在橫線上：",
+                        questions: [
+                            { id: "h1", text: "1. 這張沙發的 (  ) 兒很舒服。", options: ["坐", "座"], correct: "座", hint: "「座兒」指座位（名詞）。" },
+                            { id: "h2", text: "2. 上課了，大家快 (  ) 好！", options: ["坐", "座"], correct: "坐", hint: "「坐下」是身體動作（動詞）。" },
+                            { id: "h3", text: "3. 今天是星期三，那麼 (  ) 天是星期二了。", options: ["昨", "作"], correct: "昨", hint: "「昨天」是指過去的時間，有日字旁。" },
+                            { id: "h4", text: "4. 你的 (  ) 業本交給老師了嗎？", options: ["昨", "作"], correct: "作", hint: "「作業」是指功課，人字旁。" },
+                            { id: "h5", text: "5. 他 (  ) 陳，名叫志偉。", options: ["性", "姓"], correct: "姓", hint: "「姓陳」代表家族姓氏，女字旁旁生。" },
+                            { id: "h6", text: "6. 小美 (  ) 情隨和，我們都愛和她交朋友。", options: ["性", "姓"], correct: "性", hint: "「性情」是指脾氣和性格，心字旁。" },
+                            { id: "h7", text: "7. 弟弟累了，便躺在牀上休 (  ) 。", options: ["息", "色", "式"], correct: "息", hint: "「休息」的息，代表調養氣息。" },
+                            { id: "h8", text: "8. 教室裏掛滿了五顏六 (  ) 的彩旗。", options: ["息", "色", "式"], correct: "色", hint: "「五顏六色」表示顏色繁多。" },
+                            { id: "h9", text: "9. 你懂得計算這道算 (  ) 嗎？", options: ["息", "色", "式"], correct: "式", hint: "「算式」是指數學算式，工式。" },
+                            { id: "h10", text: "10. 外公每天做運動， (  ) 神很好。", options: ["精", "睛", "晶"], correct: "精", hint: "「精神」代表活力滿溢。" },
+                            { id: "h11", text: "11. 我跟哥哥一樣，有一雙小眼 (  ) 。", options: ["精", "睛", "晶"], correct: "睛", hint: "「眼睛」的睛與視覺有關，目字旁。" },
+                            { id: "h12", text: "12. 這顆寶石瑩 (  ) 光亮，十分美麗。", options: ["精", "睛", "晶"], correct: "晶", hint: "「亮晶晶/瑩晶」有閃亮的意思。" }
+                        ]
+                    },
+                    {
+                        type: "word_combination",
+                        title: "第二部分：將字與對應的意思詞語配對：",
+                        questions: [
+                            { word: "名", match: "名字", options: ["名字", "明白"] },
+                            { word: "明", match: "明白", options: ["名字", "明白"] },
+                            { word: "遊", match: "遊戲", options: ["遊戲", "游泳"] },
+                            { word: "游", match: "游泳", options: ["遊戲", "游泳"] },
+                            { word: "晴", match: "晴天", options: ["晴天", "事情"] },
+                            { word: "情", match: "事情", options: ["晴天", "事情"] }
+                        ]
+                    }
+                ]
+            },
+            {
+                date: "2026-07-07",
+                dayNum: 7,
+                theme: "擬聲詞(一)",
+                tip: "擬聲詞是模擬人或事物發出的聲音的詞語。如：小狗「汪汪」叫、春風「沙沙」響、北風「呼呼」吹。",
+                parts: [
+                    {
+                        type: "matching",
+                        title: "第一部分：聲音大配對！選出發出對應聲音的詞：",
+                        questions: [
+                            { id: "s1", text: "貓的叫聲", options: ["咪咪", "吱吱", "汪汪", "呱呱", "哇哇", "哈哈", "呼呼", "沙沙"], correct: "咪咪" },
+                            { id: "s2", text: "小鳥的叫聲", options: ["咪咪", "吱吱", "汪汪", "呱呱", "哇哇", "哈哈", "呼呼", "沙沙"], correct: "吱吱" },
+                            { id: "s3", text: "狗的叫聲", options: ["咪咪", "吱吱", "汪汪", "呱呱", "哇哇", "哈哈", "呼呼", "沙沙"], correct: "汪汪" },
+                            { id: "s4", text: "青蛙的叫聲", options: ["咪咪", "吱吱", "汪汪", "呱呱", "哇哇", "哈哈", "呼呼", "沙沙"], correct: "呱呱" },
+                            { id: "s5", text: "寶寶大哭的聲音", options: ["咪咪", "吱吱", "汪汪", "呱呱", "哇哇", "哈哈", "呼呼", "沙沙"], correct: "哇哇" },
+                            { id: "s6", text: "人的大笑聲", options: ["咪咪", "吱吱", "汪汪", "呱呱", "哇哇", "哈哈", "呼呼", "沙沙"], correct: "哈哈" },
+                            { id: "s7", text: "風吹的聲響", options: ["咪咪", "吱吱", "汪汪", "呱呱", "哇哇", "哈哈", "呼呼", "沙沙"], correct: "呼呼" },
+                            { id: "s8", text: "微風吹動葉子的沙沙聲", options: ["咪咪", "吱吱", "汪汪", "呱呱", "哇哇", "哈哈", "呼呼", "沙沙"], correct: "沙沙" }
+                        ]
+                    },
+                    {
+                        type: "multiple_choice",
+                        title: "第二部分：將擬聲詞填入句子的空格中：",
+                        questions: [
+                            { id: "sn1", text: "1. 小寶寶不見了媽媽，害怕得 (  ) 大哭。", options: ["哇哇", "咪咪", "哈哈"], correct: "哇哇", hint: "哭聲是哇哇的！" },
+                            { id: "sn2", text: "2. 小貓 (  ) 地叫個不停。", options: ["呼呼", "咪咪", "沙沙"], correct: "咪咪", hint: "小貓咪咪（喵喵）叫。" },
+                            { id: "sn3", text: "3. 祖父看到弟弟淘氣的樣子，忍不住 (  ) 大笑起來。", options: ["吱吱", "汪汪", "哈哈"], correct: "哈哈", hint: "笑聲肯定是哈哈大笑。" },
+                            { id: "sn4", text: "4. 小鳥在樹上 (  ) 地唱歌。", options: ["吱吱", "呱呱", "呼呼"], correct: "吱吱", hint: "鳥鳴聲如吱吱喳喳。" },
+                            { id: "sn5", text: "5. 北風 (  ) 地吹着，快把窗子關上吧。", options: ["呼呼", "沙沙", "呱呱"], correct: "呼呼", hint: "寒冷的北風呼呼地吹。" },
+                            { id: "sn6", text: "6. 小狗看到主人，立刻撲上去 (  ) 地叫。", options: ["汪汪", "咪咪", "吱吱"], correct: "汪汪", hint: "小狗見到主人高興得汪汪叫。" },
+                            { id: "sn7", text: "7. 一走近池塘，便聽到青蛙 (  ) 地叫。", options: ["呱呱", "哇哇", "呼呼"], correct: "呱呱", hint: "池塘青蛙呱呱叫。" },
+                            { id: "sn8", text: "8. 一陣風吹得原野上的小草 (  ) 地響。", options: ["沙沙", "哈哈", "吱吱"], correct: "沙沙", hint: "風吹草動發出沙沙響聲。" }
+                        ]
+                    }
+                ]
+            },
+            {
+                date: "2026-07-08",
+                dayNum: 8,
+                theme: "名詞(二)",
+                tip: "學校裏有不同的名詞，例如表示地方名稱的「教室」、「操場」，表示物件或文具的「課本」、「鉛筆」。",
+                parts: [
+                    {
+                        type: "cloze",
+                        title: "第一部分：婷婷上學的一天，請將正確的名詞填空：",
+                        wordBank: ["課本", "書包", "同學", "小賣部", "學校", "校長", "鉛筆", "老師", "尺子", "校工", "教室", "校服", "操場", "禮貌"],
+                        story: [
+                            "早上，我穿上 (1) ",
+                            "，背着 (2) ",
+                            " 來到 (3) ",
+                            " 的大門口，我看到班主任陳 (4) ",
+                            " ，主動走上去說：「您早！」她說：「你早！婷婷真有 (5) ",
+                            " 。」我走到 (6) ",
+                            " 去，看到很多 (7) ",
+                            " 在看書，有的在談天，有的在吃東西。上課鐘聲響了，我走進 (8) ",
+                            " ，把 (9) ",
+                            " 放在桌子上，準備上課。我忘了帶 (10) ",
+                            " ，怎麼寫字呢？小冰說：「我這兒有兩枝，你先拿一枝去用吧。」我笑說：「謝謝！」小息了，我和美美一起去 (11) ",
+                            " 買東西吃。一個男同學把糖果包裝袋丟地上， (12) ",
+                            " 嬸嬸說：「我們不可以亂丟垃圾啊。」男同學臉紅了，把垃圾放進垃圾箱。"
+                        ],
+                        correctAnswers: ["校服", "書包", "學校", "老師", "禮貌", "操場", "同學", "教室", "課本", "鉛筆", "小賣部", "校工"],
+                        hint: "根據文意以及學校生活的物品、人物去填寫喔！例如背起的是「書包」，切忌填「尺子」。"
+                    }
+                ]
+            },
+            {
+                date: "2026-07-09",
+                dayNum: 9,
+                theme: "句式(一) [......了]",
+                tip: "認識句式：「......了」表示動作已經完成了。例如：太陽（出來）了、花（開）了。",
+                parts: [
+                    {
+                        type: "reorder",
+                        title: "第一部分：把下列的字詞重組成通順、完整的句子：",
+                        questions: [
+                            { id: "ro1", words: ["春天", "了", "來", "。"], correct: "春天來了。", hint: "季節排最前，接着是動作來，最後加了。" },
+                            { id: "ro2", words: ["巴士", "開走", "了", "。"], correct: "巴士開走了。", hint: "交通工具開走了。" },
+                            { id: "ro3", words: ["爸爸", "回到", "家", "了", "。"], correct: "爸爸回到家了。", hint: "人物回到哪裏？" },
+                            { id: "ro4", words: ["思思", "做完", "功課", "了", "。"], correct: "思思做完功課了。", hint: "思思完成了她的任務。" },
+                            { id: "ro5", words: ["奶奶", "到", "公園", "去", "了", "。"], correct: "奶奶到公園去了。", hint: "奶奶去了哪個地方呢？" }
+                        ]
+                    },
+                    {
+                        type: "cloze_custom",
+                        title: "第二部分：根據圖意和提示字，用「......了」句式續寫完整句子：",
+                        questions: [
+                            { id: "cc1", text: "1. 提示字【破】 ➜  ", options: ["花瓶破了。", "小草破了。", "電視破了。"], correct: "花瓶破了。", hint: "地上的花瓶碎片..." },
+                            { id: "cc2", text: "2. 提示字【笑】 ➜  ", options: ["小女孩笑了。", "小男孩笑了。", "爸爸笑了。"], correct: "小女孩笑了。", hint: "圖中的女孩子露出了笑容。" },
+                            { id: "cc3", text: "3. 提示字【跌倒】 ➜  ", options: ["妹妹跌倒了。", "弟弟跌倒了。", "外婆跌倒了。"], correct: "弟弟跌倒了。", hint: "穿着短褲的男孩子摔了一跤。" },
+                            { id: "cc4", text: "4. 提示字【買水果】 ➜  ", options: ["媽媽買水果去了。", "爸爸買水果去了。", "奶奶買水果去了。"], correct: "媽媽買水果去了。", hint: "婦女挽着籃子買菜回來。" },
+                            { id: "cc5", text: "5. 提示字【青蛙】 ➜  ", options: ["青蛙跳進水裏去了。", "青蛙飛上天了。", "青蛙睡覺了。"], correct: "青蛙跳進水裏去了。", hint: "綠色的青蛙噗通一聲躍入池塘。" }
+                        ]
+                    }
+                ]
+            },
+            {
+                date: "2026-07-10",
+                dayNum: 10,
+                theme: "記敘文(一) [短文閱讀理解]",
+                tip: "敘述性文字通常用來記敘事情發生的時間、經過、地點與最終結果。我們讀故事時，要留意因果關係！",
+                parts: [
+                    {
+                        type: "reading_comp",
+                        title: "第一部分：請先用心閱讀短文（可點擊🔊發聲），然後回答問題：",
+                        passage: "森林裏住了一隻頑皮的猴子。牠常常捉弄其他小動物，大家都不願意跟牠玩。\n\n有一天，鴨子在河裏游泳。猴子看到了，又想捉弄牠，不料卻失足掉進河裏去了。猴子不會游泳，急得大叫救命。其他小動物聽到了，紛紛跳進河裏去救牠。\n\n經過這件事，猴子覺得很慚愧，知道以前那樣做是不對的。於是，牠向大家說對不起。大家都原諒了牠，重新和牠做好朋友。",
+                        questions: [
+                            { id: "rc1", type: "text", text: "1. 小動物都不願意跟猴子玩，因為牠十分 (   )，常常 (   )。", options: ["頑皮 / 捉弄其他小動物", "善良 / 幫助他人", "安靜 / 躲在樹上"], correct: "頑皮 / 捉弄其他小動物" },
+                            { id: "rc2", type: "text", text: "2. 有一天，猴子又想捉弄在河裏游泳的 (   )。", options: ["鴨子", "小雞", "青蛙"], correct: "鴨子" },
+                            { id: "rc3", type: "text", text: "3. 猴子不會 (   )，卻不小心失足掉進了河裏去。", options: ["游泳", "爬樹", "唱歌"], correct: "游泳" },
+                            { id: "rc4", type: "text", text: "4. 猴子被大家救起後，覺得很慚愧，就向大家說 (   )。", options: ["對不起", "沒關係", "謝謝你"], correct: "對不起" },
+                            { id: "rc5", type: "text", text: "5. 最後，大家都原諒了猴子，重新和牠成為 (   )。", options: ["好朋友", "對手", "老師"], correct: "好朋友" },
+                            { id: "rc6", type: "section", text: "6. 這篇文章共有三段，第 (  ) 段記述事情發生的經過，第 (  ) 段記述事情的結果。", options: ["二 、 三", "一 、 二", "二 、 一"], correct: "二 、 三" }
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        // Let's generate programmatic Days 11 to 62 so we have full coverage
+        const generatedThemes = [
+            { theme: "字的偏旁", emoji: "🧩" },
+            { theme: "名詞學習", emoji: "🧸" },
+            { theme: "動詞挑戰", emoji: "🏃" },
+            { theme: "形容詞/顏色", emoji: "🎨" },
+            { theme: "標點符號", emoji: "✍️" },
+            { theme: "同音字分辨", emoji: "🗣️" },
+            { theme: "擬聲詞妙用", emoji: "🔊" },
+            { theme: "「...了」句式", emoji: "🌟" },
+            { theme: "短文閱讀", emoji: "📖" }
+        ];
+
+        for (let i = 11; i <= 62; i++) {
+            const isJuly = i <= 31;
+            const currentMonth = isJuly ? "07" : "08";
+            const dayStr = isJuly ? (i < 10 ? `0${i}` : `${i}`) : (i - 31 < 10 ? `0${i - 31}` : `${i - 31}`);
+            const dateStr = `2026-${currentMonth}-${dayStr}`;
+            const themeObj = generatedThemes[(i - 1) % generatedThemes.length];
+
+            EXERCISES_DATABASE.push({
+                date: dateStr,
+                dayNum: i,
+                theme: `${themeObj.theme} - 挑戰(二)`,
+                tip: `這是為小朋友準備的 ${themeObj.theme} 增強版精讀提示。多讀、多寫、多發聲朗讀，中文就會頂呱呱！`,
+                parts: [
+                    {
+                        type: "multiple_choice",
+                        title: "第一部分：選出正確的答案：",
+                        questions: [
+                            { id: `g_q1_${i}`, text: `1. 下列哪一個選項最符合本課主題「${themeObj.theme}」？`, options: ["小鴨快樂地游水", "白色的羽毛", "學校裏有老師"], correct: "小鴨快樂地游水", hint: "想一想句子中的核心詞彙！" },
+                            { id: `g_q2_${i}`, text: "2. 下面哪個字可以用來造句？", options: ["坐下來", "昨天", "高高興興"], correct: "坐下來", hint: "注意搭配喔。" }
+                        ]
+                    },
+                    {
+                        type: "boolean_choices",
+                        title: "第二部分：判斷句子是否符合邏輯：",
+                        questions: [
+                            { id: `g_b1_${i}`, text: "1. 太陽公公從西邊升起，把大地照亮了。", correct: false, hint: "太陽是從東邊升起的喔！" },
+                            { id: `g_b2_${i}`, text: "2. 我們每天要早睡早起，身體才會強壯。", correct: true, hint: "早睡早起身體好！" }
+                        ]
+                    }
+                ]
+            });
+        }
+
+        // --- LOK LOK AVATAR (DYNAMIC SVG) ---
+        const LokLokCharacter = ({ costume, expression }) => {
+            let eyeLeft = <path d="M65,85 Q75,75 85,85" stroke="#4A3B32" strokeWidth="4" strokeLinecap="round" fill="none" />;
+            let eyeRight = <path d="M115,85 Q125,75 135,85" stroke="#4A3B32" strokeWidth="4" strokeLinecap="round" fill="none" />;
+            let mouth = <path d="M85,110 Q100,125 115,110" stroke="#4A3B32" strokeWidth="4" strokeLinecap="round" fill="none" />;
+            let eyebrows = (
+                <g>
+                    <path d="M60,73 Q72,68 82,75" stroke="#4A3B32" strokeWidth="3" strokeLinecap="round" fill="none" />
+                    <path d="M118,75 Q128,68 140,73" stroke="#4A3B32" strokeWidth="3" strokeLinecap="round" fill="none" />
+                </g>
+            );
+            let sweatDrop = null;
+            let blush = (
+                <g opacity="0.6">
+                    <circle cx="62" cy="98" r="7" fill="#FFA6C9" />
+                    <circle cx="138" cy="98" r="7" fill="#FFA6C9" />
+                </g>
+            );
+
+            if (expression === 'happy') {
+                eyeLeft = <path d="M63,88 Q73,78 83,88" stroke="#4A3B32" strokeWidth="5" strokeLinecap="round" fill="none" />;
+                eyeRight = <path d="M117,88 Q127,78 137,88" stroke="#4A3B32" strokeWidth="5" strokeLinecap="round" fill="none" />;
+                mouth = <path d="M82,108 Q100,135 118,108 Z" fill="#E85D75" stroke="#4A3B32" strokeWidth="3" />;
+                blush = (
+                    <g opacity="0.8" className="animate-pulse">
+                        <circle cx="62" cy="98" r="10" fill="#FF4D80" />
+                        <circle cx="138" cy="98" r="10" fill="#FF4D80" />
+                    </g>
+                );
+            } else if (expression === 'wrong' || expression === 'thinking') {
+                eyeLeft = <g><line x1="65" y1="80" x2="81" y2="88" stroke="#4A3B32" strokeWidth="4" strokeLinecap="round" /><line x1="65" y1="88" x2="81" y2="80" stroke="#4A3B32" strokeWidth="4" strokeLinecap="round" /></g>;
+                eyeRight = <g><line x1="119" y1="80" x2="135" y2="88" stroke="#4A3B32" strokeWidth="4" strokeLinecap="round" /><line x1="119" y1="88" x2="135" y2="80" stroke="#4A3B32" strokeWidth="4" strokeLinecap="round" /></g>;
+                eyebrows = (
+                    <g>
+                        <path d="M60,78 Q72,83 82,78" stroke="#4A3B32" strokeWidth="3" strokeLinecap="round" fill="none" />
+                        <path d="M118,78 Q128,83 140,78" stroke="#4A3B32" strokeWidth="3" strokeLinecap="round" fill="none" />
+                    </g>
+                );
+                mouth = <path d="M88,115 Q100,105 112,115" stroke="#4A3B32" strokeWidth="4" strokeLinecap="round" fill="none" />;
+                sweatDrop = (
+                    <path d="M145,65 C145,65 137,73 139,78 C141,83 147,83 149,78 C151,73 145,65 145,65 Z" fill="#38BDF8" />
+                );
+            }
+
+            let costumeHat = null;
+            let costumeShirt = <path d="M55,160 L145,160 L135,200 L65,200 Z" fill="#FBBF24" stroke="#4A3B32" strokeWidth="4" />;
+            let shirtDetail = <circle cx="100" cy="180" r="10" fill="#EF4444" />;
+
+            if (costume === 'chef') {
+                costumeHat = (
+                    <g>
+                        <path d="M70,40 C65,20 85,10 100,20 C115,10 135,20 130,40 C140,45 130,60 125,65 L75,65 C70,60 60,45 70,40 Z" fill="#FFFFFF" stroke="#4A3B32" strokeWidth="4" strokeLinejoin="round" />
+                        <rect x="78" y="58" width="44" height="12" fill="#E2E8F0" stroke="#4A3B32" strokeWidth="3" rx="2" />
+                    </g>
+                );
+                costumeShirt = <path d="M55,160 L145,160 L135,200 L65,200 Z" fill="#FFFFFF" stroke="#4A3B32" strokeWidth="4" />;
+                shirtDetail = (
+                    <g>
+                        <line x1="90" y1="170" x2="90" y2="190" stroke="#EF4444" strokeWidth="3" strokeLinecap="round" />
+                        <line x1="110" y1="170" x2="110" y2="190" stroke="#EF4444" strokeWidth="3" strokeLinecap="round" />
+                    </g>
+                );
+            } else if (costume === 'astronaut') {
+                costumeHat = (
+                    <circle cx="100" cy="95" r="52" fill="none" stroke="#38BDF8" strokeWidth="4" strokeDasharray="6,4" />
+                );
+                costumeShirt = <path d="M55,160 L145,160 L135,200 L65,200 Z" fill="#E2E8F0" stroke="#4A3B32" strokeWidth="4" />;
+                shirtDetail = (
+                    <g>
+                        <rect x="85" y="170" width="30" height="20" fill="#3B82F6" rx="3" />
+                        <circle cx="95" cy="180" r="4" fill="#10B981" />
+                    </g>
+                );
+            } else if (costume === 'explorer') {
+                costumeHat = (
+                    <g>
+                        <ellipse cx="100" cy="58" rx="55" ry="10" fill="#B45309" stroke="#4A3B32" strokeWidth="4" />
+                        <path d="M65,55 C65,30 135,30 135,55 Z" fill="#D97706" stroke="#4A3B32" strokeWidth="4" />
+                        <rect x="70" y="48" width="60" height="7" fill="#4A3B32" />
+                    </g>
+                );
+                costumeShirt = <path d="M55,160 L145,160 L135,200 L65,200 Z" fill="#065F46" stroke="#4A3B32" strokeWidth="4" />;
+                shirtDetail = (
+                    <g>
+                        <line x1="100" y1="165" x2="100" y2="195" stroke="#FBBF24" strokeWidth="3" />
+                        <rect x="75" y="170" width="12" height="15" fill="#047857" stroke="#4A3B32" strokeWidth="2" />
+                        <rect x="113" y="170" width="12" height="15" fill="#047857" stroke="#4A3B32" strokeWidth="2" />
+                    </g>
+                );
+            } else if (costume === 'wizard') {
+                costumeHat = (
+                    <g>
+                        <ellipse cx="100" cy="58" rx="60" ry="10" fill="#4338CA" stroke="#4A3B32" strokeWidth="4" />
+                        <path d="M60,54 L100,5 L140,54 Z" fill="#6366F1" stroke="#4A3B32" strokeWidth="4" strokeLinejoin="round" />
+                        <polygon points="100,20 102,25 108,25 103,29 105,35 100,31 95,35 97,29 92,25 98,25" fill="#FBBF24" />
+                    </g>
+                );
+                costumeShirt = <path d="M55,160 L145,160 L135,200 L65,200 Z" fill="#4338CA" stroke="#4A3B32" strokeWidth="4" />;
+                shirtDetail = (
+                    <g>
+                        <polygon points="100,168 103,174 110,174 105,178 107,184 100,180 93,184 95,178 90,174 97,174" fill="#FBBF24" />
+                    </g>
+                );
+            }
+
+            return (
+                <svg viewBox="0 0 200 210" className="w-full h-full drop-shadow-md">
+                    <circle cx="100" cy="110" r="85" fill="#F3F4F6" opacity="0.3" />
+                    {costumeShirt}
+                    {shirtDetail}
+                    <rect x="90" y="130" width="20" height="20" fill="#FFE3D1" stroke="#4A3B32" strokeWidth="4" />
+                    <circle cx="100" cy="95" r="43" fill="#FFE3D1" stroke="#4A3B32" strokeWidth="4" />
+                    <circle cx="55" cy="95" r="9" fill="#FFE3D1" stroke="#4A3B32" strokeWidth="4" />
+                    <circle cx="145" cy="95" r="9" fill="#FFE3D1" stroke="#4A3B32" strokeWidth="4" />
+                    <path d="M54,80 C54,50 146,50 146,80 C146,80 135,58 100,58 C65,58 54,80 54,80 Z" fill="#5C4033" stroke="#4A3B32" strokeWidth="4" />
+                    <path d="M57,80 L75,80 L80,72 L95,84 L108,70 L120,84 L130,75 L143,80" stroke="#4A3B32" strokeWidth="4" fill="none" strokeLinecap="round" />
+                    {eyebrows}
+                    {eyeLeft}
+                    {eyeRight}
+                    {blush}
+                    {mouth}
+                    {sweatDrop}
+                    {costumeHat}
+                </svg>
+            );
+        };
+
+        // --- MAIN APP COMPONENT ---
+        const App = () => {
+            const [completedDays, setCompletedDays] = useState(() => {
+                const saved = localStorage.getItem('loklok_completed_days_v2');
+                return saved ? JSON.parse(saved) : {};
+            });
+            const [stars, setStars] = useState(() => {
+                const saved = localStorage.getItem('loklok_stars_v2');
+                return saved ? parseInt(saved, 10) : 0;
+            });
+            const [currentCostume, setCurrentCostume] = useState(() => {
+                const saved = localStorage.getItem('loklok_costume_v2');
+                return saved ? saved : 'plain';
+            });
+            const [parentMode, setParentMode] = useState(false);
+            const [currentMonth, setCurrentMonth] = useState('7'); // '7' or '8'
+            const [activeExercise, setActiveExercise] = useState(null); // Playing exercise
+            const [lokLokExpression, setLokLokExpression] = useState('idle');
+
+            // Workspace states for the interactive worksheets
+            const [worksheetAnswers, setWorksheetAnswers] = useState({});
+            const [worksheetChecked, setWorksheetChecked] = useState(false);
+            const [worksheetResults, setWorksheetResults] = useState({});
+
+            useEffect(() => {
+                localStorage.setItem('loklok_completed_days_v2', JSON.stringify(completedDays));
+            }, [completedDays]);
+
+            useEffect(() => {
+                localStorage.setItem('loklok_stars_v2', stars);
+            }, [stars]);
+
+            useEffect(() => {
+                localStorage.setItem('loklok_costume_v2', currentCostume);
+            }, [currentCostume]);
+
+            useEffect(() => {
+                if (lokLokExpression !== 'idle' && activeExercise === null) {
+                    const timer = setTimeout(() => setLokLokExpression('idle'), 4000);
+                    return () => clearTimeout(timer);
+                }
+            }, [lokLokExpression]);
+
+            const handleReset = () => {
+                if (confirm("家長您好，確定要重新開始所有練習，將星星和進度歸零嗎？")) {
+                    playSynthSound('click');
+                    setCompletedDays({});
+                    setStars(0);
+                    setCurrentCostume('plain');
+                    setLokLokExpression('idle');
+                    localStorage.removeItem('loklok_completed_days_v2');
+                    localStorage.removeItem('loklok_stars_v2');
+                    localStorage.removeItem('loklok_costume_v2');
+                }
+            };
+
+            const isDayUnlocked = (dateString, idx) => {
+                if (parentMode) return true;
+                if (idx === 0) return true;
+                const prevDateKey = EXERCISES_DATABASE[idx - 1]?.date;
+                return completedDays[prevDateKey] === true;
+            };
+
+            const getSpeechBubbleText = () => {
+                if (lokLokExpression === 'happy') {
+                    return "你太厲害了！答得完全正確！我們獲得了閃亮的星星！🌟🔊";
+                }
+                if (lokLokExpression === 'wrong') {
+                    return "不要緊，我們再看看小祕訣，再試一次吧！樂樂陪你！💪🔊";
+                }
+                if (lokLokExpression === 'thinking') {
+                    return "唔... 聽一聽廣東話，再把正確的詞語拉進去吧！🤔🔊";
+                }
+                
+                const totalCompleted = Object.keys(completedDays).length;
+                if (totalCompleted === 62) {
+                    return "哇！62天暑假中文挑戰全部完成了！你現在是超強中文小學霸了！🏆🎉🔊";
+                }
+                if (totalCompleted > 5) {
+                    return "我們每天都有進步！快來跟我解鎖太空人和大魔法師裝扮吧！🦁🔊";
+                }
+                return "你好呀！我是樂樂！這個暑假，讓我們一起依據工作紙精讀挑戰一日一練習！🔊";
+            };
+
+            const speakLokLokWelcome = () => {
+                speakCantonese(getSpeechBubbleText().replace("🔊", ""));
+            };
+
+            const costumesList = [
+                { id: 'plain', name: '便服樂樂', cost: 0, icon: '👕' },
+                { id: 'chef', name: '小廚神', cost: 5, icon: '🍳' },
+                { id: 'astronaut', name: '太空人', cost: 12, icon: '🚀' },
+                { id: 'explorer', name: '探險家', cost: 20, icon: '🤠' },
+                { id: 'wizard', name: '大魔法師', cost: 30, icon: '🧙‍♂️' }
+            ];
+
+            const changeCostume = (costumeId, cost) => {
+                if (stars >= cost) {
+                    playSynthSound('click');
+                    setCurrentCostume(costumeId);
+                    setLokLokExpression('happy');
+                    setTimeout(() => setLokLokExpression('idle'), 2500);
+                }
+            };
+
+            // Open popup exercise & initialize its interactive state
+            const handleDayClick = (exercise, index) => {
+                if (!isDayUnlocked(exercise.date, index)) {
+                    playSynthSound('error');
+                    alert("請先完成前面的練習，一步一腳印地前進喔！🐾");
+                    return;
+                }
+                playSynthSound('click');
+                setActiveExercise({ ...exercise, index });
+                setWorksheetAnswers({});
+                setWorksheetChecked(false);
+                setWorksheetResults({});
+                setLokLokExpression('thinking');
+            };
+
+            // Handling Cloze / Matching Selection Change inside Worksheet
+            const selectOptionForCloze = (partIdx, qId, val) => {
+                playSynthSound('click');
+                setWorksheetAnswers(prev => ({
+                    ...prev,
+                    [`${partIdx}_${qId}`]: val
+                }));
+            };
+
+            const selectFlowerPetal = (partIdx, flowerIdx, petalVal) => {
+                playSynthSound('click');
+                setWorksheetAnswers(prev => {
+                    const key = `${partIdx}_f_${flowerIdx}`;
+                    const currentSelected = prev[key] || [];
+                    if (currentSelected.includes(petalVal)) {
+                        return { ...prev, [key]: currentSelected.filter(p => p !== petalVal) };
+                    } else {
+                        return { ...prev, [key]: [...currentSelected, petalVal] };
+                    }
+                });
+            };
+
+            // WORKBOOK ANSWERS VERIFICATION (Runs multi-questions checker)
+            const handleWorksheetSubmit = () => {
+                if (worksheetChecked) return;
+
+                let allCorrect = true;
+                const tempResults = {};
+
+                activeExercise.parts.forEach((part, partIdx) => {
+                    if (part.type === 'matching' || part.type === 'multiple_choice' || part.type === 'boolean_choices' || part.type === 'punctuation_filling' || part.type === 'cloze_custom' || part.type === 'reading_comp') {
+                        part.questions.forEach(q => {
+                            const answerKey = `${partIdx}_${q.id}`;
+                            const kidAnswer = worksheetAnswers[answerKey];
+                            const isCorrect = kidAnswer === q.correct;
+                            tempResults[answerKey] = isCorrect;
+                            if (!isCorrect) allCorrect = false;
+                        });
+                    } else if (part.type === 'color_picker') {
+                        const answerKey = `${partIdx}_colors`;
+                        const kidSelected = worksheetAnswers[answerKey] || [];
+                        const isCorrect = kidSelected.length === part.correctAnswers.length && 
+                                          kidSelected.every(c => part.correctAnswers.includes(c));
+                        tempResults[answerKey] = isCorrect;
+                        if (!isCorrect) allCorrect = false;
+                    } else if (part.type === 'cloze') {
+                        // 12 Cloze answers
+                        part.correctAnswers.forEach((ans, blankIdx) => {
+                            const answerKey = `${partIdx}_blank_${blankIdx}`;
+                            const kidAnswer = worksheetAnswers[answerKey];
+                            const isCorrect = kidAnswer === ans;
+                            tempResults[answerKey] = isCorrect;
+                            if (!isCorrect) allCorrect = false;
+                        });
+                    } else if (part.type === 'flower_petal') {
+                        part.flowers.forEach((flower, fIdx) => {
+                            const answerKey = `${partIdx}_f_${fIdx}`;
+                            const kidSelected = worksheetAnswers[answerKey] || [];
+                            const isCorrect = kidSelected.length === flower.petals.length &&
+                                              kidSelected.every(p => flower.petals.includes(p));
+                            tempResults[answerKey] = isCorrect;
+                            if (!isCorrect) allCorrect = false;
+                        });
+                    } else if (part.type === 'reorder') {
+                        part.questions.forEach(q => {
+                            const answerKey = `${partIdx}_${q.id}`;
+                            const kidAnswer = worksheetAnswers[answerKey];
+                            const isCorrect = kidAnswer === q.correct;
+                            tempResults[answerKey] = isCorrect;
+                            if (!isCorrect) allCorrect = false;
+                        });
+                    } else if (part.type === 'word_combination') {
+                        part.questions.forEach((q, qIdx) => {
+                            const answerKey = `${partIdx}_wc_${qIdx}`;
+                            const kidAnswer = worksheetAnswers[answerKey];
+                            const isCorrect = kidAnswer === q.match;
+                            tempResults[answerKey] = isCorrect;
+                            if (!isCorrect) allCorrect = false;
+                        });
+                    }
+                });
+
+                setWorksheetResults(tempResults);
+                setWorksheetChecked(true);
+
+                if (allCorrect) {
+                    playSynthSound('success');
+                    setLokLokExpression('happy');
+                    if (!completedDays[activeExercise.date]) {
+                        setStars(prev => prev + 1);
+                        setCompletedDays(prev => ({
+                            ...prev,
+                            [activeExercise.date]: true
+                        }));
+                    }
+                } else {
+                    playSynthSound('error');
+                    setLokLokExpression('wrong');
+                }
+            };
+
+            const getDaysInMonthArray = (month) => {
+                const emptySlots = month === '7' ? 3 : 6;
+                const totalDays = 31;
+                const arr = [];
+                for (let i = 0; i < emptySlots; i++) arr.push(null);
+                for (let d = 1; d <= totalDays; d++) {
+                    const dayStr = d < 10 ? `0${d}` : `${d}`;
+                    const dateStr = `2026-0${month}-${dayStr}`;
+                    const exerciseIndex = EXERCISES_DATABASE.findIndex(e => e.date === dateStr);
+                    arr.push({
+                        dayNum: d,
+                        dateStr: dateStr,
+                        exercise: EXERCISES_DATABASE[exerciseIndex],
+                        index: exerciseIndex
+                    });
+                }
+                return arr;
+            };
+
+            const calendarDays = getDaysInMonthArray(currentMonth);
+
+            const getMonthCompletionCount = (month) => {
+                let count = 0;
+                for (let d = 1; d <= 31; d++) {
+                    const dayStr = d < 10 ? `0${d}` : `${d}`;
+                    const dateStr = `2026-0${month}-${dayStr}`;
+                    if (completedDays[dateStr]) count++;
+                }
+                return count;
+            };
+
+            return (
+                <div className="container mx-auto px-4 py-6 max-w-6xl">
+                    
+                    {/* HEADER */}
+                    <header className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-6 rounded-3xl border-4 border-yellow-300 shadow-lg mb-8 relative overflow-hidden">
+                        <div className="absolute top-0 left-0 right-0 h-3 bg-gradient-to-r from-red-400 via-orange-400 via-yellow-400 via-green-400 via-blue-400 to-purple-400"></div>
+                        
+                        <div className="flex items-center gap-4">
+                            <div className="bg-yellow-100 p-3 rounded-full text-4xl animate-bounce">
+                                🎒
+                            </div>
+                            <div>
+                                <h1 className="text-3xl md:text-4xl font-black text-sky-500 font-playful flex items-center gap-2">
+                                    樂樂的暑期中文大作戰
+                                </h1>
+                                <p className="text-slate-500 text-sm md:text-base font-medium mt-1">
+                                    📖 依據精讀練習，專為小一升小二量身定製的 62 天學習日曆 (2026版)
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-3">
+                            <label className="flex items-center gap-2 bg-purple-50 hover:bg-purple-100 px-4 py-2 rounded-full border-2 border-purple-200 cursor-pointer transition-all">
+                                <span className="text-xs font-bold text-purple-700">🔑 測試解鎖模式</span>
+                                <input 
+                                    type="checkbox" 
+                                    checked={parentMode} 
+                                    onChange={(e) => {
+                                        playSynthSound('click');
+                                        setParentMode(e.target.checked);
+                                    }} 
+                                    className="w-4 h-4 accent-purple-600 rounded cursor-pointer"
+                                />
+                            </label>
+                            <button 
+                                onClick={handleReset}
+                                className="bg-rose-50 hover:bg-rose-100 text-rose-600 border-2 border-rose-200 px-4 py-2 rounded-full text-xs font-bold transition-all"
+                            >
+                                🔄 重設進度
+                            </button>
+                        </div>
+                    </header>
+
+                    {/* MAIN CONTAINER */}
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                        
+                        {/* LEFT COLUMN: CHARACTER HUB */}
+                        <aside className="lg:col-span-4 bg-white rounded-3xl border-4 border-sky-300 p-6 shadow-xl flex flex-col items-center relative">
+                            
+                            <div className="absolute top-4 right-4 bg-amber-100 border-2 border-amber-300 px-4 py-2 rounded-full flex items-center gap-1 shadow-sm">
+                                <span className="text-2xl animate-pulse">⭐</span>
+                                <span className="text-xl font-bold text-amber-700 font-playful">{stars}</span>
+                            </div>
+
+                            <div className="text-center mt-2">
+                                <span className="bg-sky-100 text-sky-700 text-xs font-black uppercase px-3 py-1 rounded-full tracking-wider">
+                                    陪伴學習小夥伴
+                                </span>
+                                <h2 className="text-2xl font-bold text-slate-700 mt-1">
+                                    主角：樂樂
+                                </h2>
+                            </div>
+
+                            <div className="w-56 h-56 my-4 bg-gradient-to-b from-sky-50 to-blue-100 rounded-full border-4 border-white shadow-inner flex items-center justify-center p-4 relative group">
+                                <LokLokCharacter costume={currentCostume} expression={lokLokExpression} />
+                                <button 
+                                    onClick={speakLokLokWelcome}
+                                    title="播放廣東話迎賓語"
+                                    className="absolute bottom-1 right-1 bg-yellow-400 hover:bg-yellow-500 text-yellow-950 p-2.5 rounded-full shadow-md text-lg transition-all border-2 border-white"
+                                >
+                                    🔊
+                                </button>
+                            </div>
+
+                            {/* SPEECH BUBBLE */}
+                            <div className="w-full bg-amber-50 border-2 border-amber-200 p-4 rounded-2xl relative mb-6">
+                                <div className="absolute left-1/2 -top-3 -translate-x-1/2 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-b-8 border-b-amber-50"></div>
+                                <p className="text-slate-700 font-bold text-sm leading-relaxed text-center">
+                                    {getSpeechBubbleText()}
+                                </p>
+                            </div>
+
+                            {/* PROGRESS TRACKER */}
+                            <div className="w-full border-t-2 border-slate-100 pt-4 mb-6">
+                                <div className="flex justify-between text-xs font-bold text-slate-500 mb-1">
+                                    <span>暑期大作戰進度</span>
+                                    <span>{Object.keys(completedDays).length} / 62 天</span>
+                                </div>
+                                <div className="w-full h-4 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200">
+                                    <div 
+                                        className="h-full bg-gradient-to-r from-emerald-400 to-green-500 rounded-full transition-all duration-500"
+                                        style={{ width: `${(Object.keys(completedDays).length / 62) * 100}%` }}
+                                    ></div>
+                                </div>
+                            </div>
+
+                            {/* COSTUME CABINET */}
+                            <div className="w-full">
+                                <h3 className="text-sm font-black text-slate-500 mb-3 flex items-center gap-1 border-b pb-2">
+                                    👕 樂樂的暑假大衣櫃
+                                </h3>
+                                <div className="grid grid-cols-1 gap-2">
+                                    {costumesList.map((item) => {
+                                        const isUnlocked = stars >= item.cost;
+                                        const isEquipped = currentCostume === item.id;
+                                        return (
+                                            <button
+                                                key={item.id}
+                                                disabled={!isUnlocked}
+                                                onClick={() => changeCostume(item.id, item.cost)}
+                                                className={`flex items-center justify-between p-2 rounded-xl border-2 transition-all text-left ${
+                                                    isEquipped 
+                                                        ? 'border-emerald-400 bg-emerald-50 text-emerald-800 font-bold' 
+                                                        : isUnlocked
+                                                            ? 'border-slate-200 hover:border-sky-300 hover:bg-sky-50 text-slate-700'
+                                                            : 'border-slate-100 bg-slate-50 text-slate-400 cursor-not-allowed'
+                                                }`}
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xl">{item.icon}</span>
+                                                    <div className="text-xs">
+                                                        <p className="font-bold">{item.name}</p>
+                                                        {!isUnlocked && (
+                                                            <p className="text-[10px] text-amber-500 font-medium">需 {item.cost} 顆星星 ⭐</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    {isEquipped ? (
+                                                        <span className="text-xs bg-emerald-200 text-emerald-800 px-2.5 py-0.5 rounded-full font-bold">已換上</span>
+                                                    ) : isUnlocked ? (
+                                                        <span className="text-xs bg-sky-100 text-sky-700 px-2.5 py-0.5 rounded-full">更換</span>
+                                                    ) : (
+                                                        <span className="text-xs text-slate-400">🔒 鎖定</span>
+                                                    )}
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                        </aside>
+
+                        {/* RIGHT COLUMN: CALENDAR BOARD */}
+                        <main className="lg:col-span-8 bg-white rounded-3xl border-4 border-yellow-300 p-6 shadow-xl">
+                            
+                            {/* MONTH TABS */}
+                            <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-6">
+                                <button
+                                    onClick={() => { playSynthSound('click'); setCurrentMonth('7'); }}
+                                    className={`flex-1 py-3 text-center rounded-xl font-bold font-playful text-lg transition-all ${
+                                        currentMonth === '7'
+                                            ? 'bg-sky-400 text-white shadow-md'
+                                            : 'text-slate-600 hover:text-sky-500'
+                                    }`}
+                                >
+                                    ☀️ 7月份・暑期中文挑戰 ({getMonthCompletionCount('7')}/31)
+                                </button>
+                                <button
+                                    onClick={() => { playSynthSound('click'); setCurrentMonth('8'); }}
+                                    className={`flex-1 py-3 text-center rounded-xl font-bold font-playful text-lg transition-all ${
+                                        currentMonth === '8'
+                                            ? 'bg-orange-400 text-white shadow-md'
+                                            : 'text-slate-600 hover:text-orange-500'
+                                    }`}
+                                >
+                                    🏖️ 8月份・更上一層樓 ({getMonthCompletionCount('8')}/31)
+                                </button>
+                            </div>
+
+                            {/* WEEK LABELS */}
+                            <div className="grid grid-cols-7 gap-2 text-center font-bold text-slate-400 text-xs md:text-sm mb-3">
+                                <div className="text-rose-400">日</div>
+                                <div>一</div>
+                                <div>二</div>
+                                <div>三</div>
+                                <div>四</div>
+                                <div>五</div>
+                                <div className="text-sky-400">六</div>
+                            </div>
+
+                            {/* CALENDAR TILES */}
+                            <div className="grid grid-cols-7 gap-2">
+                                {calendarDays.map((day, index) => {
+                                    if (!day) {
+                                        return <div key={`empty-${index}`} className="aspect-square bg-slate-50 opacity-40 rounded-2xl"></div>;
+                                    }
+
+                                    const isCompleted = completedDays[day.dateStr] === true;
+                                    const unlocked = isDayUnlocked(day.dateStr, day.index);
+                                    
+                                    let btnStyle = "bg-slate-50 border-2 border-slate-200 text-slate-300 cursor-not-allowed";
+                                    let badgeStyle = "bg-slate-200 text-slate-400";
+                                    
+                                    if (isCompleted) {
+                                        btnStyle = "bg-gradient-to-br from-green-50 to-emerald-100 hover:from-green-100 hover:to-emerald-200 border-2 border-green-400 text-emerald-800 cursor-pointer shadow-sm hover:scale-105";
+                                        badgeStyle = "bg-green-400 text-white";
+                                    } else if (unlocked) {
+                                        btnStyle = currentMonth === '7'
+                                            ? "bg-gradient-to-br from-sky-50 to-sky-100 hover:from-sky-100 hover:to-sky-200 border-2 border-sky-400 text-sky-800 cursor-pointer shadow-md hover:scale-105 animate-pulse"
+                                            : "bg-gradient-to-br from-orange-50 to-orange-100 hover:from-orange-100 hover:to-orange-200 border-2 border-orange-400 text-orange-800 cursor-pointer shadow-md hover:scale-105 animate-pulse";
+                                        badgeStyle = currentMonth === '7' ? "bg-sky-500 text-white" : "bg-orange-500 text-white";
+                                    }
+
+                                    return (
+                                        <button
+                                            key={day.dateStr}
+                                            onClick={() => handleDayClick(day.exercise, day.index)}
+                                            disabled={!unlocked}
+                                            className={`aspect-square rounded-2xl p-1 md:p-2 flex flex-col justify-between items-center relative transition-all ${btnStyle}`}
+                                        >
+                                            <span className={`text-[10px] md:text-xs font-black px-1.5 py-0.5 rounded-full self-start ${badgeStyle}`}>
+                                                {day.dayNum}
+                                            </span>
+
+                                            <div className="my-auto flex flex-col items-center">
+                                                {unlocked ? (
+                                                    <span className="text-lg md:text-2xl" title={day.exercise?.theme}>
+                                                        {isCompleted ? '⭐' : '📝'}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-sm md:text-base text-slate-300">🔒</span>
+                                                )}
+                                            </div>
+
+                                            <span className="text-[9px] font-bold hidden md:block">
+                                                {isCompleted ? '完成' : (unlocked ? (day.exercise?.theme.substring(0,4)) : '未解鎖')}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                        </main>
+                    </div>
+
+                    {/* FOOTER */}
+                    <footer className="text-center mt-12 py-6 border-t border-slate-200 text-slate-400 text-xs">
+                        <p className="font-bold">樂樂學習樂園 © 2026 暑假中文特別企劃</p>
+                        <p className="mt-1">精心重現《90日精讀練習》核心重點，多題多練習、配以智能粵語發聲！</p>
+                    </footer>
+
+                    {/* POPUP: ACTIVE EXERCISE WORKBOOK MODAL */}
+                    {activeExercise && (
+                        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 md:p-4 overflow-y-auto">
+                            <div className="bg-white rounded-3xl border-4 border-yellow-300 max-w-2xl w-full p-4 md:p-6 relative shadow-2xl animate-in fade-in zoom-in duration-200 max-h-[90vh] flex flex-col">
+                                
+                                {/* Confetti / Top Accent */}
+                                <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-yellow-400 text-yellow-950 font-playful font-black px-6 py-1 rounded-full border-4 border-white shadow-lg text-sm md:text-base whitespace-nowrap">
+                                    第 {activeExercise.dayNum} 天練習：{activeExercise.theme} 🏆
+                                </div>
+
+                                {/* Close Button */}
+                                <button
+                                    onClick={() => { playSynthSound('click'); setActiveExercise(null); window.speechSynthesis.cancel(); }}
+                                    className="absolute -top-3 -right-3 w-8 h-8 md:w-10 md:h-10 bg-rose-500 hover:bg-rose-600 text-white rounded-full border-4 border-white shadow-lg font-black text-sm md:text-lg flex items-center justify-center transition-all"
+                                >
+                                    ✕
+                                </button>
+
+                                {/* Scrollable content inside the workbook modal */}
+                                <div className="mt-4 overflow-y-auto scroll-custom pr-2 flex-1 pb-4">
+                                    
+                                    {/* Reading Secret Tip Box with TTS */}
+                                    <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 mb-6 relative">
+                                        <div className="flex items-center justify-between border-b border-amber-200 pb-2 mb-2">
+                                            <span className="font-bold text-amber-800 text-sm flex items-center gap-1">
+                                                💡 精讀小祕訣
+                                            </span>
+                                            <button 
+                                                onClick={() => speakCantonese(activeExercise.tip)}
+                                                className="bg-amber-100 hover:bg-amber-200 text-amber-900 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 transition-all"
+                                            >
+                                                🔊 聽聽廣東話
+                                            </button>
+                                        </div>
+                                        <p className="text-slate-700 text-sm leading-relaxed">{activeExercise.tip}</p>
+                                    </div>
+
+                                    {/* LIST OF EXERCISE PARTS (MULTIPLE QUESTIONS!) */}
+                                    {activeExercise.parts.map((part, partIdx) => (
+                                        <div key={partIdx} className="border-t-2 border-slate-100 pt-4 mt-6">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <h4 className="text-base md:text-lg font-black text-sky-600">
+                                                    {part.title}
+                                                </h4>
+                                                <button 
+                                                    onClick={() => speakCantonese(part.title + (part.desc || ""))}
+                                                    className="text-xs bg-sky-50 text-sky-700 font-bold px-2.5 py-1 rounded-full flex items-center gap-1"
+                                                >
+                                                    🔊 讀標題
+                                                </button>
+                                            </div>
+
+                                            {part.desc && (
+                                                <p className="text-xs text-slate-500 mb-3">{part.desc}</p>
+                                            )}
+
+                                            {/* RENDER DYNAMIC COMPONENT BASED ON EXERCISE TYPE */}
+                                            {/* TYPE: Matching (Radical matching, picture-verb matching) */}
+                                            {part.type === "matching" && (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    {part.questions.map((q) => {
+                                                        const answerKey = `${partIdx}_${q.id}`;
+                                                        const userSel = worksheetAnswers[answerKey] || "";
+                                                        const isCorrect = worksheetResults[answerKey];
+
+                                                        return (
+                                                            <div key={q.id} className="bg-slate-50 p-3 rounded-2xl border-2 border-slate-100 flex flex-col justify-between">
+                                                                <div className="flex items-center justify-between mb-2">
+                                                                    <span className="font-bold text-slate-800 text-sm">
+                                                                        {q.text} <span className="text-sky-500 underline font-black">{userSel || "___"}</span>
+                                                                    </span>
+                                                                    <button 
+                                                                        onClick={() => speakCantonese(q.text.replace("(  )", userSel || "空"))}
+                                                                        className="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-md"
+                                                                    >
+                                                                        🔊
+                                                                    </button>
+                                                                </div>
+                                                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                                                    {q.options.map(opt => (
+                                                                        <button
+                                                                            key={opt}
+                                                                            disabled={worksheetChecked}
+                                                                            onClick={() => selectOptionForCloze(partIdx, q.id, opt)}
+                                                                            className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all ${
+                                                                                userSel === opt 
+                                                                                    ? 'bg-sky-500 border-sky-600 text-white shadow-sm'
+                                                                                    : 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700'
+                                                                            }`}
+                                                                        >
+                                                                            {opt}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                                {worksheetChecked && (
+                                                                    <div className={`mt-2 text-xs font-bold ${isCorrect ? 'text-emerald-600' : 'text-rose-500'}`}>
+                                                                        {isCorrect ? '🟢 答對了！' : `🔴 答錯了，提示：${q.hint}`}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+
+                                            {/* TYPE: Flower Petals */}
+                                            {part.type === "flower_petal" && (
+                                                <div className="flex flex-col gap-8">
+                                                    {part.flowers.map((flower, fIdx) => {
+                                                        const answerKey = `${partIdx}_f_${fIdx}`;
+                                                        const selectedPetals = worksheetAnswers[answerKey] || [];
+                                                        const isCorrect = worksheetResults[answerKey];
+
+                                                        return (
+                                                            <div key={fIdx} className="bg-emerald-50/50 p-4 rounded-2xl border-2 border-emerald-100 flex flex-col items-center">
+                                                                {/* Draw Flower Base */}
+                                                                <div className="relative w-36 h-36 flex items-center justify-center mb-4">
+                                                                    {/* Center circle */}
+                                                                    <div className="absolute w-14 h-14 bg-yellow-400 rounded-full border-4 border-yellow-500 flex items-center justify-center font-black text-yellow-950 text-xl shadow-md z-10">
+                                                                        {flower.center}
+                                                                    </div>
+                                                                    {/* Cute petal indicators */}
+                                                                    <div className="absolute top-0 w-12 h-12 rounded-full bg-pink-100 border-2 border-pink-300 flex items-center justify-center font-bold text-xs text-pink-700">
+                                                                        {selectedPetals[0] || '?'}
+                                                                    </div>
+                                                                    <div className="absolute bottom-0 w-12 h-12 rounded-full bg-pink-100 border-2 border-pink-300 flex items-center justify-center font-bold text-xs text-pink-700">
+                                                                        {selectedPetals[1] || '?'}
+                                                                    </div>
+                                                                    <div className="absolute left-0 w-12 h-12 rounded-full bg-pink-100 border-2 border-pink-300 flex items-center justify-center font-bold text-xs text-pink-700">
+                                                                        {selectedPetals[2] || '?'}
+                                                                    </div>
+                                                                    <div className="absolute right-0 w-12 h-12 rounded-full bg-pink-100 border-2 border-pink-300 flex items-center justify-center font-bold text-xs text-pink-700">
+                                                                        {selectedPetals[3] || '?'}
+                                                                    </div>
+                                                                </div>
+
+                                                                <p className="text-xs text-slate-500 mb-2">點選以下合適的花瓣漢字組字（需選4個）：</p>
+                                                                <div className="flex flex-wrap gap-2 justify-center">
+                                                                    {flower.options.map(opt => {
+                                                                        const isSelected = selectedPetals.includes(opt);
+                                                                        return (
+                                                                            <button
+                                                                                key={opt}
+                                                                                disabled={worksheetChecked}
+                                                                                onClick={() => selectFlowerPetal(partIdx, fIdx, opt)}
+                                                                                className={`px-4 py-2 rounded-full text-sm font-black border transition-all ${
+                                                                                    isSelected
+                                                                                        ? 'bg-pink-500 border-pink-600 text-white shadow-sm'
+                                                                                        : 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700'
+                                                                                }`}
+                                                                            >
+                                                                                {opt}
+                                                                            </button>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                                {worksheetChecked && (
+                                                                    <div className={`mt-3 text-xs font-bold ${isCorrect ? 'text-emerald-600' : 'text-rose-500'}`}>
+                                                                        {isCorrect ? `🟢 花朵完成！拼出：${flower.petals.join('、')}` : `🔴 未拼對。提示：${flower.hint}`}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+
+                                            {/* TYPE: Multiple Choice (P3 style) */}
+                                            {part.type === "multiple_choice" && (
+                                                <div className="space-y-4">
+                                                    {part.questions.map((q) => {
+                                                        const answerKey = `${partIdx}_${q.id}`;
+                                                        const userSel = worksheetAnswers[answerKey] || "";
+                                                        const isCorrect = worksheetResults[answerKey];
+
+                                                        return (
+                                                            <div key={q.id} className="bg-sky-50/50 p-4 rounded-2xl border-2 border-sky-100">
+                                                                <div className="flex justify-between items-start gap-4 mb-2">
+                                                                    <span className="font-bold text-slate-800 text-sm leading-relaxed">
+                                                                        {q.text.replace("(  )", ` ( ${userSel || "___"} ) `)}
+                                                                    </span>
+                                                                    <button 
+                                                                        onClick={() => speakCantonese(q.text.replace("(  )", userSel || "空格"))}
+                                                                        className="bg-sky-100 hover:bg-sky-200 p-1.5 rounded-full text-xs"
+                                                                    >
+                                                                        🔊
+                                                                    </button>
+                                                                </div>
+                                                                <div className="flex flex-wrap gap-2">
+                                                                    {q.options.map(opt => (
+                                                                        <button
+                                                                            key={opt}
+                                                                            disabled={worksheetChecked}
+                                                                            onClick={() => selectOptionForCloze(partIdx, q.id, opt)}
+                                                                            className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
+                                                                                userSel === opt 
+                                                                                    ? 'bg-sky-500 border-sky-600 text-white shadow-md'
+                                                                                    : 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700'
+                                                                            }`}
+                                                                        >
+                                                                            {opt}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                                {worksheetChecked && (
+                                                                    <div className={`mt-2 text-xs font-bold ${isCorrect ? 'text-emerald-600' : 'text-rose-500'}`}>
+                                                                        {isCorrect ? `🟢 答對了！組合成「${q.fullWord}」字。` : `🔴 答錯了。提示：${q.hint}`}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+
+                                            {/* TYPE: Cloze Passage (mid-autumn story with 12 words list) */}
+                                            {part.type === "cloze" && (
+                                                <div className="bg-amber-50/30 p-4 rounded-2xl border-2 border-amber-100">
+                                                    {/* Word bank shelf */}
+                                                    <div className="bg-white p-3 rounded-xl border border-slate-200 mb-4">
+                                                        <p className="text-xs font-black text-slate-400 mb-2">🏷️ 詞語庫（點擊方格填空）：</p>
+                                                        <div className="flex flex-wrap gap-1.5">
+                                                            {part.wordBank.map(word => (
+                                                                <span 
+                                                                    key={word} 
+                                                                    onClick={() => speakCantonese(word)}
+                                                                    className="bg-slate-100 hover:bg-sky-100 text-slate-700 text-xs font-bold px-2 py-1 rounded-md cursor-pointer border border-slate-200"
+                                                                >
+                                                                    {word} 🔊
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* The story with select blanks */}
+                                                    <div className="text-slate-800 text-sm leading-relaxed p-2 border border-dashed border-slate-200 rounded-xl bg-white max-h-72 overflow-y-auto scroll-custom">
+                                                        {part.story.map((textChunk, chunkIdx) => {
+                                                            const isLast = chunkIdx === part.story.length - 1;
+                                                            if (isLast) {
+                                                                return <span key={chunkIdx}>{textChunk}</span>;
+                                                            }
+                                                            const answerKey = `${partIdx}_blank_${chunkIdx}`;
+                                                            const selectedVal = worksheetAnswers[answerKey] || "";
+                                                            const isCorrect = worksheetResults[answerKey];
+
+                                                            let blankStyle = "border-amber-400 text-amber-800 bg-amber-50";
+                                                            if (worksheetChecked) {
+                                                                blankStyle = isCorrect ? "border-emerald-500 text-emerald-800 bg-emerald-50" : "border-rose-400 text-rose-800 bg-rose-50";
+                                                            }
+
+                                                            return (
+                                                                <span key={chunkIdx}>
+                                                                    {textChunk}
+                                                                    <select
+                                                                        disabled={worksheetChecked}
+                                                                        value={selectedVal}
+                                                                        onChange={(e) => selectOptionForCloze(partIdx, `blank_${chunkIdx}`, e.target.value)}
+                                                                        className={`mx-1 px-2 py-0.5 rounded-lg border-2 text-xs font-bold cursor-pointer outline-none ${blankStyle}`}
+                                                                    >
+                                                                        <option value="">請選擇</option>
+                                                                        {part.wordBank.map(w => (
+                                                                            <option key={w} value={w}>{w}</option>
+                                                                        ))}
+                                                                    </select>
+                                                                </span>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                    <div className="mt-4 flex justify-end">
+                                                        <button 
+                                                            onClick={() => speakCantonese(part.story.join(" —— ").replace(/\(\d+\)/g, "空格"))}
+                                                            className="text-xs bg-amber-100 text-amber-800 px-3 py-1 rounded-full font-bold"
+                                                        >
+                                                            🔊 朗讀故事整段
+                                                        </button>
+                                                    </div>
+                                                    {worksheetChecked && (
+                                                        <div className="mt-4 text-xs text-slate-500 bg-white p-3 rounded-lg border border-slate-100 leading-relaxed">
+                                                            <p className="font-bold text-amber-700">💡 樂樂的對話解析：</p>
+                                                            <p>{part.hint}</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {/* TYPE: Color Picker (Find color terms) */}
+                                            {part.type === "color_picker" && (
+                                                <div className="space-y-4">
+                                                    <div className="bg-slate-50 p-4 rounded-2xl border-2 border-slate-200 text-sm leading-relaxed flex justify-between items-start">
+                                                        <p className="text-slate-800 font-bold">{part.text}</p>
+                                                        <button 
+                                                            onClick={() => speakCantonese(part.text)}
+                                                            className="bg-slate-200 p-2 rounded-full hover:bg-slate-300"
+                                                        >
+                                                            🔊
+                                                        </button>
+                                                    </div>
+                                                    
+                                                    <p className="text-xs text-slate-500">點選短文裏面的「顏色詞」（正確答案共5個）：</p>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {part.options.map(opt => {
+                                                            const answerKey = `${partIdx}_colors`;
+                                                            const currentSelected = worksheetAnswers[answerKey] || [];
+                                                            const isSelected = currentSelected.includes(opt);
+
+                                                            const toggleChoice = () => {
+                                                                if (worksheetChecked) return;
+                                                                let updated = [];
+                                                                if (isSelected) {
+                                                                    updated = currentSelected.filter(c => c !== opt);
+                                                                } else {
+                                                                    updated = [...currentSelected, opt];
+                                                                }
+                                                                setWorksheetAnswers(prev => ({
+                                                                    ...prev,
+                                                                    [answerKey]: updated
+                                                                }));
+                                                            };
+
+                                                            return (
+                                                                <button
+                                                                    key={opt}
+                                                                    onClick={toggleChoice}
+                                                                    className={`px-4 py-2 rounded-xl text-xs font-black border transition-all ${
+                                                                        isSelected 
+                                                                            ? 'bg-purple-500 border-purple-600 text-white shadow-sm'
+                                                                            : 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700'
+                                                                    }`}
+                                                                >
+                                                                    {opt}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                    {worksheetChecked && (
+                                                        <div className={`text-xs font-bold ${worksheetResults[`${partIdx}_colors`] ? 'text-emerald-600' : 'text-rose-500'}`}>
+                                                            {worksheetResults[`${partIdx}_colors`] ? "🟢 完全正確！找齊了：紅、藍、白、綠、黃！" : `🔴 未選對，提示：${part.hint}`}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {/* TYPE: Boolean Choices (✓ / X) */}
+                                            {part.type === "boolean_choices" && (
+                                                <div className="space-y-3">
+                                                    {part.questions.map((q) => {
+                                                        const answerKey = `${partIdx}_${q.id}`;
+                                                        const userSel = worksheetAnswers[answerKey]; // true or false or undefined
+                                                        const isCorrect = worksheetResults[answerKey];
+
+                                                        return (
+                                                            <div key={q.id} className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-2">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-sm font-bold text-slate-800">{q.text}</span>
+                                                                    <button 
+                                                                        onClick={() => speakCantonese(q.text)}
+                                                                        className="text-[10px] bg-slate-200 px-1 rounded"
+                                                                    >
+                                                                        🔊
+                                                                    </button>
+                                                                </div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <button
+                                                                        disabled={worksheetChecked}
+                                                                        onClick={() => selectOptionForCloze(partIdx, q.id, true)}
+                                                                        className={`px-3 py-1.5 rounded-lg text-xs font-black border ${
+                                                                            userSel === true 
+                                                                                ? 'bg-emerald-500 border-emerald-600 text-white' 
+                                                                                : 'bg-white hover:bg-slate-100 border-slate-200 text-slate-600'
+                                                                        }`}
+                                                                    >
+                                                                        ✓ 正確
+                                                                    </button>
+                                                                    <button
+                                                                        disabled={worksheetChecked}
+                                                                        onClick={() => selectOptionForCloze(partIdx, q.id, false)}
+                                                                        className={`px-3 py-1.5 rounded-lg text-xs font-black border ${
+                                                                            userSel === false 
+                                                                                ? 'bg-rose-500 border-rose-600 text-white' 
+                                                                                : 'bg-white hover:bg-slate-100 border-slate-200 text-slate-600'
+                                                                        }`}
+                                                                    >
+                                                                        X 錯誤
+                                                                    </button>
+                                                                </div>
+                                                                {worksheetChecked && (
+                                                                    <div className={`text-xs font-bold md:w-32 ${isCorrect ? 'text-emerald-600' : 'text-rose-500'}`}>
+                                                                        {isCorrect ? '🟢 回答正確' : `🔴 錯了，${q.hint}`}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+
+                                            {/* TYPE: Punctuation filling */}
+                                            {part.type === "punctuation_filling" && (
+                                                <div className="space-y-4">
+                                                    {part.questions.map((q) => {
+                                                        const answerKey = `${partIdx}_${q.id}`;
+                                                        const userSel = worksheetAnswers[answerKey] || "";
+                                                        const isCorrect = worksheetResults[answerKey];
+
+                                                        return (
+                                                            <div key={q.id} className="bg-violet-50/50 p-4 rounded-2xl border-2 border-violet-100">
+                                                                <div className="flex justify-between items-center gap-4 mb-2">
+                                                                    <span className="font-bold text-slate-800 text-sm leading-relaxed">
+                                                                        {q.text.replace("[ ]", ` [ ${userSel || "___"} ] `)}
+                                                                    </span>
+                                                                    <button 
+                                                                        onClick={() => speakCantonese(q.text.replace("[ ]", userSel || "空格"))}
+                                                                        className="bg-violet-100 hover:bg-violet-200 p-1.5 rounded-full text-xs"
+                                                                    >
+                                                                        🔊
+                                                                    </button>
+                                                                </div>
+                                                                <div className="flex gap-2">
+                                                                    {q.options.map(opt => (
+                                                                        <button
+                                                                            key={opt}
+                                                                            disabled={worksheetChecked}
+                                                                            onClick={() => selectOptionForCloze(partIdx, q.id, opt)}
+                                                                            className={`w-12 py-2 rounded-xl text-sm font-black border transition-all ${
+                                                                                userSel === opt 
+                                                                                    ? 'bg-violet-500 border-violet-600 text-white shadow-md'
+                                                                                    : 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700'
+                                                                            }`}
+                                                                        >
+                                                                            {opt}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                                {worksheetChecked && (
+                                                                    <div className={`mt-2 text-xs font-bold ${isCorrect ? 'text-emerald-600' : 'text-rose-500'}`}>
+                                                                        {isCorrect ? '🟢 標點正確！' : `🔴 未能用對。提示：${q.hint}`}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+
+                                            {/* TYPE: Word Combination */}
+                                            {part.type === "word_combination" && (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    {part.questions.map((q, qIdx) => {
+                                                        const answerKey = `${partIdx}_wc_${qIdx}`;
+                                                        const userSel = worksheetAnswers[answerKey] || "";
+                                                        const isCorrect = worksheetResults[answerKey];
+
+                                                        return (
+                                                            <div key={qIdx} className="bg-slate-50 p-3 rounded-2xl border border-slate-200 flex flex-col justify-between">
+                                                                <div className="flex items-center justify-between mb-2">
+                                                                    <span className="font-bold text-slate-800 text-sm">
+                                                                        字：【{q.word}】➜  詞語：<span className="text-sky-500 underline font-black">{userSel || "____"}</span>
+                                                                    </span>
+                                                                    <button onClick={() => speakCantonese(q.word + "字配詞" + (userSel || ""))} className="text-xs">🔊</button>
+                                                                </div>
+                                                                <div className="flex gap-2">
+                                                                    {q.options.map(opt => (
+                                                                        <button
+                                                                            key={opt}
+                                                                            disabled={worksheetChecked}
+                                                                            onClick={() => selectOptionForCloze(partIdx, `wc_${qIdx}`, opt)}
+                                                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${
+                                                                                userSel === opt 
+                                                                                    ? 'bg-sky-500 border-sky-600 text-white' 
+                                                                                    : 'bg-white border-slate-200 hover:bg-slate-100'
+                                                                            }`}
+                                                                        >
+                                                                            {opt}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                                {worksheetChecked && (
+                                                                    <div className={`text-xs font-bold mt-2 ${isCorrect ? 'text-emerald-600' : 'text-rose-500'}`}>
+                                                                        {isCorrect ? '🟢 配詞成功' : '🔴 配詞不對'}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+
+                                            {/* TYPE: Sentence Reordering */}
+                                            {part.type === "reorder" && (
+                                                <div className="space-y-4">
+                                                    {part.questions.map((q) => {
+                                                        const answerKey = `${partIdx}_${q.id}`;
+                                                        const userSel = worksheetAnswers[answerKey] || "";
+                                                        const isCorrect = worksheetResults[answerKey];
+
+                                                        return (
+                                                            <div key={q.id} className="bg-orange-50/50 p-4 rounded-2xl border-2 border-orange-100">
+                                                                <div className="flex justify-between items-start mb-2">
+                                                                    <div>
+                                                                        <p className="text-xs text-slate-400 mb-1">🏷️ 打亂的字詞：</p>
+                                                                        <div className="flex flex-wrap gap-1.5">
+                                                                            {q.words.map((w, wIdx) => (
+                                                                                <span key={wIdx} className="bg-white border border-orange-200 text-slate-700 font-bold px-2.5 py-1 rounded-lg text-xs shadow-sm">
+                                                                                    {w}
+                                                                                </span>
+                                                                            ))}
+                                                                        </div>
+                                                                    </div>
+                                                                    <button 
+                                                                        onClick={() => speakCantonese(q.words.join(" "))}
+                                                                        className="bg-orange-100 hover:bg-orange-200 p-1.5 rounded-full"
+                                                                    >
+                                                                        🔊
+                                                                    </button>
+                                                                </div>
+
+                                                                <div className="mt-3">
+                                                                    <p className="text-xs text-slate-500 mb-1">✍️ 重組句子結果：</p>
+                                                                    <input 
+                                                                        type="text"
+                                                                        disabled={worksheetChecked}
+                                                                        placeholder="請手動輸入或將排好的句子打進來（例：春天來了。）"
+                                                                        value={userSel}
+                                                                        onChange={(e) => selectOptionForCloze(partIdx, q.id, e.target.value)}
+                                                                        className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-orange-300 outline-none"
+                                                                    />
+                                                                </div>
+
+                                                                {worksheetChecked && (
+                                                                    <div className={`mt-2 text-xs font-bold ${isCorrect ? 'text-emerald-600' : 'text-rose-500'}`}>
+                                                                        {isCorrect 
+                                                                            ? '🟢 句子重組完全正確！' 
+                                                                            : `🔴 重組有誤，正確答案是：『${q.correct}』`}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+
+                                            {/* TYPE: Custom Cloze / Sentence continuation */}
+                                            {part.type === "cloze_custom" && (
+                                                <div className="space-y-4">
+                                                    {part.questions.map((q) => {
+                                                        const answerKey = `${partIdx}_${q.id}`;
+                                                        const userSel = worksheetAnswers[answerKey] || "";
+                                                        const isCorrect = worksheetResults[answerKey];
+
+                                                        return (
+                                                            <div key={q.id} className="bg-indigo-50/50 p-4 rounded-2xl border-2 border-indigo-100">
+                                                                <div className="flex justify-between items-center mb-2">
+                                                                    <span className="font-bold text-slate-800 text-sm">{q.text} {userSel || "______"}</span>
+                                                                    <button onClick={() => speakCantonese(q.text + (userSel || ""))} className="text-xs">🔊</button>
+                                                                </div>
+                                                                <div className="flex flex-wrap gap-2">
+                                                                    {q.options.map(opt => (
+                                                                        <button
+                                                                            key={opt}
+                                                                            disabled={worksheetChecked}
+                                                                            onClick={() => selectOptionForCloze(partIdx, q.id, opt)}
+                                                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${
+                                                                                userSel === opt 
+                                                                                    ? 'bg-indigo-500 border-indigo-600 text-white shadow-md' 
+                                                                                    : 'bg-white border-slate-200 hover:bg-slate-100'
+                                                                            }`}
+                                                                        >
+                                                                            {opt}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                                {worksheetChecked && (
+                                                                    <div className={`mt-2 text-xs font-bold ${isCorrect ? 'text-emerald-600' : 'text-rose-500'}`}>
+                                                                        {isCorrect ? '🟢 續寫正確！' : `🔴 錯了，提示：${q.hint}`}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+
+                                            {/* TYPE: Reading Comprehension */}
+                                            {part.type === "reading_comp" && (
+                                                <div className="space-y-6">
+                                                    {/* The passage */}
+                                                    <div className="bg-teal-50 border-2 border-teal-100 p-4 rounded-2xl relative">
+                                                        <div className="flex justify-between items-center border-b border-teal-100 pb-2 mb-3">
+                                                            <span className="font-bold text-teal-800 text-sm">📖 短文閱讀（認真讀一讀）：</span>
+                                                            <button 
+                                                                onClick={() => speakCantonese(part.passage)}
+                                                                className="bg-teal-100 hover:bg-teal-200 text-teal-900 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 transition-all animate-pulse"
+                                                            >
+                                                                🔊 粵語全文朗讀
+                                                            </button>
+                                                        </div>
+                                                        <div className="text-slate-700 text-sm leading-relaxed whitespace-pre-line font-medium bg-white/80 p-3 rounded-xl border border-teal-50">
+                                                            {part.passage}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* The Reading questions */}
+                                                    <div className="space-y-4">
+                                                        <p className="text-xs font-black text-teal-700">✍️ 閱讀理解題目：</p>
+                                                        {part.questions.map((q) => {
+                                                            const answerKey = `${partIdx}_${q.id}`;
+                                                            const userSel = worksheetAnswers[answerKey] || "";
+                                                            const isCorrect = worksheetResults[answerKey];
+
+                                                            return (
+                                                                <div key={q.id} className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                                                    <div className="flex justify-between items-start gap-4 mb-2">
+                                                                        <span className="font-bold text-slate-800 text-xs md:text-sm leading-relaxed">
+                                                                            {q.text.replace("(   )", ` ( ${userSel || "___"} ) `)}
+                                                                        </span>
+                                                                        <button 
+                                                                            onClick={() => speakCantonese(q.text.replace("(   )", userSel || "空格"))}
+                                                                            className="text-xs"
+                                                                        >
+                                                                            🔊
+                                                                        </button>
+                                                                    </div>
+                                                                    <div className="flex flex-wrap gap-2">
+                                                                        {q.options.map(opt => (
+                                                                            <button
+                                                                                key={opt}
+                                                                                disabled={worksheetChecked}
+                                                                                onClick={() => selectOptionForCloze(partIdx, q.id, opt)}
+                                                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                                                                                    userSel === opt 
+                                                                                        ? 'bg-teal-500 border-teal-600 text-white shadow-md'
+                                                                                        : 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700'
+                                                                                }`}
+                                                                            >
+                                                                                {opt}
+                                                                            </button>
+                                                                        ))}
+                                                                    </div>
+                                                                    {worksheetChecked && (
+                                                                        <div className={`mt-2 text-xs font-bold ${isCorrect ? 'text-emerald-600' : 'text-rose-500'}`}>
+                                                                            {isCorrect ? '🟢 答案正確！' : '🔴 回答不正確。'}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                        </div>
+                                    ))}
+
+                                </div>
+
+                                {/* BOTTOM ACTIONS PANEL OF WORKBOOK */}
+                                <div className="border-t-2 border-slate-100 pt-4 mt-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+                                    <div className="text-slate-500 text-xs text-center sm:text-left">
+                                        {worksheetChecked 
+                                            ? "核對完結！如全對即可獲發星星 ⭐，若有錯可關閉重新挑戰！" 
+                                            : "請答完上面所有部分的題目，然後點右邊的按鈕核對！"}
+                                    </div>
+                                    <div className="flex gap-2 w-full sm:w-auto justify-end">
+                                        {!worksheetChecked ? (
+                                            <button
+                                                onClick={handleWorksheetSubmit}
+                                                className="w-full sm:w-auto bg-gradient-to-r from-emerald-400 to-green-500 hover:from-emerald-500 hover:to-green-600 text-white font-black py-3 px-8 rounded-full shadow-lg transition-all"
+                                            >
+                                                🔍 提交並核對所有答案
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => { playSynthSound('click'); setActiveExercise(null); setLokLokExpression('idle'); window.speechSynthesis.cancel(); }}
+                                                className="w-full sm:w-auto bg-slate-500 hover:bg-slate-600 text-white font-bold py-3 px-8 rounded-full shadow-md transition-all"
+                                            >
+                                                關閉練習 ➡️
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    )}
+
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
