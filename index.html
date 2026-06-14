@@ -221,7 +221,7 @@
                 <!-- SUBMIT AND STATUS ACTIONS -->
                 <div class="flex flex-col sm:flex-row gap-3 mt-5 items-center justify-between">
                     <div id="status-message" class="text-base font-black text-[#0284C7] hidden">
-                        🎉 答對你，做得好！
+                        🎉 答對了，做得好！
                     </div>
                     <div class="flex gap-2 w-full sm:w-auto ml-auto">
                         <button id="reset-day-btn" onclick="clearCurrentDayAnswers()" class="flex-1 sm:flex-initial bg-white hover:bg-slate-50 text-slate-700 font-bold px-4 py-3 rounded-xl border-2 border-[#2D3748] comic-shadow btn-bounce">
@@ -249,7 +249,7 @@
             <div class="text-6xl mb-4 text-sky-500">
                 <i class="fa-solid fa-circle-check"></i>
             </div>
-            <h4 id="modal-title" class="text-2xl font-black mb-2">答對你，做得好！🌟</h4>
+            <h4 id="modal-title" class="text-2xl font-black mb-2">答對了，做得好！🌟</h4>
             <p id="modal-body" class="text-stone-700 font-bold mb-6">你真聰明！獲得了一顆閃亮的金星！樂樂兔為你驕傲！</p>
             <button onclick="closeModal()" class="w-full bg-sky-500 hover:bg-sky-600 text-white font-black py-3 rounded-xl border-2 border-[#2D3748] comic-shadow btn-bounce">
                 太棒了，繼續！
@@ -1497,11 +1497,11 @@
 
                 const lang = document.getElementById('tts-lang').value;
                 // Output updated praise string exactly as requested
-                const praise = "答對你，做得好！";
+                const praise = "答對了，做得好！";
                 speakText(praise, lang);
 
                 triggerConfetti();
-                showModal("答對你，做得好！🌟", `你順利完成了第 ${currentDay} 天的中文精讀大挑戰！獲得了一顆金星！樂樂兔為你驕傲！`);
+                showModal("答對了，做得好！🌟", `你順利完成了第 ${currentDay} 天的中文精讀大挑戰！獲得了一顆金星！樂樂兔為你驕傲！`);
 
                 document.getElementById('check-btn').classList.add('hidden');
                 document.getElementById('next-btn').classList.remove('hidden');
