@@ -118,7 +118,7 @@
                 <button onclick="resetProgress()" class="w-full mt-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs rounded-lg transition-all border border-stone-300">
                     <i class="fa-solid fa-rotate-left mr-1"></i> 重設所有進度
                 </button>
-            </aside>
+            </</aside>
 
             <!-- RIGHT PANEL: INTERACTIVE WORKSPACE -->
             <main class="lg:col-span-8 bg-sky-50/10 rounded-2xl p-4 md:p-6 border-2 border-sky-100 flex flex-col justify-between min-h-[520px]">
@@ -364,7 +364,7 @@
                 questions: [
                     { 
                         id: "q1", 
-                        text: "今天是中秋節，我們全家人一起過節。奶奶和（ 0 ）去（ 1 ）買了很多菜，有一個大（ 2 ）、幾個紅紅的（ 3 ），還有長長的（ 4 ）。看！她們正在做晚飯呢。（ 5 ）和我坐在沙發上看電視。門鈴響了，我去開門。原來是（ 6 ）回來了。", 
+                        text: "今天是中秋節，我們全家人一起過節。奶奶和（ 0 ）去（ 1 ）買了很多菜，有一個大（ 2 ）、幾顆紅紅的（ 3 ），還有長長的（ 4 ）。看！她們正在做晚飯呢。（ 5 ）和我坐在沙發上看電視。門鈴響了，我去開門。原來是（ 6 ）回來了。", 
                         options: ["媽媽", "菜市場", "冬瓜", "番茄", "豆角", "爺爺", "爸爸"], 
                         answers: ["媽媽", "菜市場", "冬瓜", "番茄", "豆角", "爺爺", "爸爸"] 
                     },
@@ -399,12 +399,12 @@
                 tip: "顏色詞是用來描述事物的不同色彩，使事物的形象更具體。常用的顏色詞有：紅、黃、綠、藍、紫、黑、白、灰等。",
                 type: "pairing",
                 instruction: "選出最適合的顏色詞填入句子中：",
-                audioText: "形容詞一，繽紛顏色詞。選出最適合的顏色詞填入句子中。",
+                audioText: "形容詞一，繽紛顏色詞.選出最適合的顏色詞填入句子中。",
                 questions: [
                     { 
                         id: "q1", 
                         text: "1. 媽媽牽着我的手，走過（ 0 ）色的斑馬線。\n2. 西瓜的果肉是（ 1 ）色的，又甜又多汁，很好吃。\n3. 荷花長在（ 2 ）葉上面，分外嬌美。\n4. 熟透了的香蕉彎彎的，好像（ 3 ）色的小船。\n5. 聖誕老人穿上（ 4 ）色的衣裳，給孩子們送禮物。\n6. 草原上滿是毛色雪（ 5 ）的綿羊。\n7. 在地圖上，（ 6 ）色的部分通常代表海洋。\n8. 熊貓咬着（ 7 ）色的竹子，很滋味的樣子。", 
-                        options: ["白", "紅", "綠", "黃", "藍", "啡", "黑"], 
+                        options: ["黑", "紅", "綠", "黃", "紅", "白", "藍", "綠"], 
                         answers: ["黑", "紅", "綠", "黃", "紅", "白", "藍", "綠"] 
                     }
                 ]
@@ -492,7 +492,7 @@
             8: {
                 day: 8,
                 title: "第八天：名詞(二) 快樂上學去 🏫",
-                tip: "名詞是表示人物、地方、事物等名稱的詞.例如：校服、課本、教室、操場等。",
+                tip: "名詞是表示人物、地方、事物等名稱的詞。例如：校服、書包、教室、操場等。",
                 type: "pairing",
                 instruction: "請填入最適當的名詞，幫助故事變得完整：",
                 audioText: "名詞二，快樂上學去。請填入最適當的名詞，幫助故事變得完整。",
@@ -521,7 +521,7 @@
                 questions: [
                     { id: "q1", words: ["春天", "了", "來", "。"], correct: ["春天", "來", "了", "。"], hint: "什麼來了？" } ,
                     { id: "q2", words: ["巴士", "了", "開走", "。"], correct: ["巴士", "開走", "了", "。"], hint: "什麼開走了？" },
-                    { id: "q3", words: ["回到", "爸爸", "了", "家", "。"], correct: ["爸爸", "回到", "家", "了", "。"], hint: "誰回到家了？" },
+                    { id: "q3", words: ["回到", "爸爸", "了", "家", "。"], correct: ["爸爸", "回到", "家", "l了", "。"], hint: "誰回到家了？" },
                     { id: "q4", words: ["思思", "功課", "做完", "了", "。"], correct: ["思思", "做完", "功課", "了", "。"], hint: "思思做完了什麼？" }
                 ]
             },
@@ -1544,29 +1544,18 @@
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = lang;
 
-            // iOS-specific voice matching bypass to prevent Cantonese fallback bug on Apple devices
+            // iOS / macOS / Safari environment detection
             const isAppleDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ||
-                                 navigator.userAgent.includes('Macintosh');
+                                 navigator.userAgent.includes('Macintosh') ||
+                                 (navigator.vendor && navigator.vendor.includes('Apple'));
 
             if (isAppleDevice) {
-                // IMPORTANT iOS FIX: Do NOT manually assign a voice object if we are on iOS and speaking Mandarin.
-                // Apple devices have a bug where assigning an offline premium voice forces fallback to system default (Cantonese).
-                // Setting only utterance.lang = 'zh-CN' lets iOS internally resolve to the working system Mandarin voice.
-                if (lang === 'zh-CN') {
-                    // Just set lang and do NOT set voice. iOS will natively use Siri Mandarin beautifully!
-                } else {
-                    // For Cantonese, set the lang, or trySinji
-                    const voices = window.speechSynthesis.getVoices();
-                    const cantoneseVoice = voices.find(v => {
-                        const name = v.name.toLowerCase();
-                        const vLang = v.lang.toLowerCase();
-                        return (vLang === 'zh-hk' || vLang === 'zh-hant-hk' || name.includes('sinji') || name.includes('sin-ji') || name.includes('cantonese') || name.includes('hong kong'));
-                    });
-                    if (cantoneseVoice) {
-                        utterance.voice = cantoneseVoice;
-                    }
-                }
+                // IMPORTANT iOS/macOS Safari FIX:
+                // Do NOT manually assign any voice object. iOS/macOS has a bug where assigning an offline premium
+                // voice (like Sinji or Sin-ji) causes the engine to fail silently, freeze, or fall back to English.
+                // Simply setting utterance.lang ('zh-HK' or 'zh-CN') allows iOS to automatically and natively 
+                // route to Siri's default built-in Cantonese/Mandarin voices with absolute stability.
             } else {
                 // Non-Apple Devices standard voice binding
                 const voices = window.speechSynthesis.getVoices();
@@ -1595,7 +1584,7 @@
             }
 
             // Kid-friendly tone parameters
-            utterance.pitch = 1.25;
+            utterance.pitch = 1.15;
             utterance.rate = 0.95;
 
             // Tiny timeout avoids SpeechSynthesis lock up in Safari iOS
