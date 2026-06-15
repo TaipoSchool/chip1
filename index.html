@@ -220,17 +220,17 @@
 
                 <!-- SUBMIT AND STATUS ACTIONS -->
                 <div class="flex flex-col sm:flex-row gap-3 mt-5 items-center justify-between">
-                    <div id="status-message" class="text-base font-black text-[#0284C7] hidden">
+                    <div id="status-message" class="text-base font-black text-emerald-600 hidden">
                         🎉 答對了，做得好！
                     </div>
                     <div class="flex gap-2 w-full sm:w-auto ml-auto">
                         <button id="reset-day-btn" onclick="clearCurrentDayAnswers()" class="flex-1 sm:flex-initial bg-white hover:bg-slate-50 text-slate-700 font-bold px-4 py-3 rounded-xl border-2 border-[#2D3748] comic-shadow btn-bounce">
                             <i class="fa-solid fa-rotate-left mr-1"></i> 重填
                         </button>
-                        <button id="check-btn" onclick="validateAnswers()" class="flex-1 sm:flex-initial bg-gradient-to-r from-sky-500 to-blue-500 hover:from-sky-600 hover:to-blue-600 text-white font-black px-6 py-3 rounded-xl border-2 border-[#2D3748] comic-shadow btn-bounce">
+                        <button id="check-btn" onclick="validateAnswers()" class="flex-1 sm:flex-initial bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black px-6 py-3 rounded-xl border-2 border-[#2D3748] comic-shadow btn-bounce">
                             提交答案 <i class="fa-solid fa-paper-plane ml-1"></i>
                         </button>
-                        <button id="next-btn" onclick="goToNextDay()" class="flex-1 sm:flex-initial bg-sky-500 hover:bg-sky-600 text-white font-black px-6 py-3 rounded-xl border-2 border-[#2D3748] comic-shadow btn-bounce hidden">
+                        <button id="next-btn" onclick="goToNextDay()" class="flex-1 sm:flex-initial bg-emerald-500 hover:bg-emerald-600 text-white font-black px-6 py-3 rounded-xl border-2 border-[#2D3748] comic-shadow btn-bounce hidden">
                             下一天挑戰 <i class="fa-solid fa-circle-chevron-right ml-1"></i>
                         </button>
                     </div>
@@ -244,14 +244,14 @@
 
     <!-- REWARD MODAL (Beautiful Celebration overlay) -->
     <div id="reward-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-gradient-to-r from-sky-100 via-blue-50 to-indigo-100 rounded-3xl border-4 border-[#2D3748] comic-shadow max-w-sm w-full p-6 text-center relative overflow-hidden">
+        <div class="bg-gradient-to-r from-yellow-100 via-amber-50 to-orange-100 rounded-3xl border-4 border-[#2D3748] comic-shadow max-w-sm w-full p-6 text-center relative overflow-hidden">
             <div id="modal-confetti" class="absolute inset-0 pointer-events-none"></div>
-            <div class="text-6xl mb-4 text-sky-500">
+            <div class="text-6xl mb-4 text-yellow-500">
                 <i class="fa-solid fa-circle-check"></i>
             </div>
             <h4 id="modal-title" class="text-2xl font-black mb-2">答對了，做得好！🌟</h4>
             <p id="modal-body" class="text-stone-700 font-bold mb-6">你真聰明！獲得了一顆閃亮的金星！樂樂兔為你驕傲！</p>
-            <button onclick="closeModal()" class="w-full bg-sky-500 hover:bg-sky-600 text-white font-black py-3 rounded-xl border-2 border-[#2D3748] comic-shadow btn-bounce">
+            <button onclick="closeModal()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-3 rounded-xl border-2 border-[#2D3748] comic-shadow btn-bounce">
                 太棒了，繼續！
             </button>
         </div>
@@ -315,19 +315,20 @@
             return newArray;
         };
 
+        // --- STREAMING_CHUNK:Declaring cute animal icon parameters... ---
+        // 14 Days Cute Animal Icons list (Fixes dayAnimals is not defined bug)
+        const dayAnimals = ["🐶", "🐱", "🐰", "🦊", "🦁", "🐨", "🐼", "🐻", "🐸", "🐔", "🐧", "🐵", "🦄", "👑"];
+
         // --- GLOBAL APP STATE ---
         let currentDay = 1;
         let progress = {}; // Stores completed states { 1: true, 2: false }
         let userAnswers = {}; // Day-scoped answers e.g. { "1_q1": "眠" }
         let reorderSelections = {}; // Temporary list for word sorting Day 9 / Day 13
         let fontSizeMode = 'standard';
-        let isAnswerRevealed = false; // Flag to lock choices and highlight correct ones directly on failure
+        let isFinalCelebration = false; // Flag to prevent Day 14 modal recursion loop
+        let isAnswerRevealed = false; // Declaring state lock for validation reviews
 
-        // --- CUTE ANIMALS ARRAY FOR 14 DAYS NAV ---
-        const dayAnimals = ["🐶", "🐱", "🐹", "🦊", "🐻", "🐼", "🐨", "🐯", "🦁", "🐮", "🐷", "🐸", "🐵", "🐰"];
-
-        // --- STREAMING_CHUNK:Defining exercises database... ---
-        // --- 14 DAYS CURRICULUM DATABASE ---
+        // --- 14 DAYS CURRICULUM DATABASE (DAYS 1-10 FROM USER ARTIFACT, 11-14 ADDED) ---
         const exercises = {
             1: {
                 day: 1,
@@ -450,13 +451,13 @@
                 questions: [
                     { 
                         id: "q1", 
-                        text: "1. 這張沙發的（ 0 ）位很舒服。\n2. 上課了，大家快（ 1 ）好！\n3. 今天是星期三，那麼（ 2 ）天是星期二了。\n4. 你的（ 3 ）業本交給老師了嗎？\n5. 他（ 4 ）陳，名叫志偉。\n6. 小美（ 5 ）情隨和，我們都愛和她交朋友。", 
+                        text: "1. 這張沙發的（ 0 ）兒很舒服。\n2. 上課了，大家快（ 1 ）好！\n3. 今天是星期三，那麼（ 2 ）天是星期二了。\n4. 你的（ 3 ）業本交給老師了嗎？\n5. 他（ 4 ）陳，名叫志偉。\n6. 小美（ 5 ）情隨和，我們都愛和她交朋友。", 
                         options: ["座", "坐", "昨", "作", "姓", "性"], 
                         answers: ["座", "坐", "昨", "作", "姓", "性"] 
                     },
                     { 
                         id: "q2", 
-                        text: "7. 弟弟累了，便躺在牀上休（ 0 ）。\n8. 教室裏掛滿了五顏六（ 1 ）的彩旗。\n9. 你懂得計算這道算（ 2 ）嗎？\n10. 外公每天做運動，（ 3 ）神很好。\n11. 我跟哥哥一樣，有一雙小眼（ 4 ）。\n12. 這顆寶石（ 5 ）瑩光亮，十分美麗。", 
+                        text: "7. 弟弟累了，便躺在牀上休（ 0 ）。\n8. 教室裏掛滿了五顏六（ 1 ）的彩旗。\n9. 你懂得計算這道算（ 2 ）嗎？\n10. 外公每天做運動，（ 3 ）神很好。\n11. 我跟哥哥一樣，有一雙小眼（ 4 ）。\n12. 這顆寶石瑩（ 5 ）光亮，十分美麗。", 
                         options: ["息", "色", "式", "精", "睛", "晶"], 
                         answers: ["息", "色", "式", "精", "睛", "晶"] 
                     }
@@ -503,12 +504,12 @@
             9: {
                 day: 9,
                 title: "第九天：句式(一) 「......了」字句 🪄",
-                tip: "認識句式：「......了」表示動作已經完成了。例如：花兒開了、太陽出來了。注意這次也要把句號「。」排在最後面喔！",
+                tip: "認識句式：「......了」表示動作已經完成了。例如：花兒開了、太陽太陽出來了。注意這次也要把句號「。」排在最後面喔！",
                 type: "reorder",
                 instruction: "請點擊下方的詞語氣泡，將它們排列成通順的句子：",
                 audioText: "句式一，了字句。請點擊下方的詞語氣泡，將它們排列成通順的句子，別忘了句號喔！",
                 questions: [
-                    { id: "q1", words: ["春天", "了", "來", "。"], correct: ["春天", "來", "了", "。"], hint: "什麼來了？" },
+                    { id: "q1", words: ["春天", "了", "來", "。"], correct: ["春天", "來", "了", "。"], hint: "什麼來了？" } ,
                     { id: "q2", words: ["巴士", "了", "開走", "。"], correct: ["巴士", "開走", "了", "。"], hint: "什麼開走了？" },
                     { id: "q3", words: ["回到", "爸爸", "了", "家", "。"], correct: ["爸爸", "回到", "家", "了", "。"], hint: "誰回到家了？" },
                     { id: "q4", words: ["思思", "功課", "做完", "了", "。"], correct: ["思思", "做完", "功課", "了", "。"], hint: "思思做完了什麼？" }
@@ -523,7 +524,7 @@
                 instruction: "閱讀短文後，選取最適當的答案：",
                 audioText: "記敘文閱讀理解。請先讀短文，然後選取最適合的答案。",
                 questions: [
-                    { id: "q1", qText: "為什麼其他小動物一開始不願意和猴子玩？", options: ["因為猴子很頑皮，常常捉弄牠們", "因為猴子不會唱歌", "開學日子"], answer: "因為猴子很頑皮，常常捉弄牠們" },
+                    { id: "q1", qText: "為什麼其他小動物一開始不願意和猴子玩？", options: ["因為猴子很頑皮，常常捉弄牠們", "因為猴子不會唱歌", "因為猴子不喜歡游泳"], answer: "因為猴子很頑皮，常常捉弄牠們" },
                     { id: "q2", qText: "有一天猴子想捉弄在河裡游泳的誰，卻掉進了河裡？", options: ["鴨子", "小狗", "小貓"], answer: "鴨子" },
                     { id: "q3", qText: "猴子掉進河裡後，其他小動物怎麼做？", options: ["紛紛跳進河裡去救牠", "在岸上哈哈大笑", "悄悄地走開了"], answer: "紛紛跳進河裡去救牠" },
                     { id: "q4", qText: "經歷這件事後，猴子有什麼改變？", options: ["覺得很慚愧，並向大家說對不起", "變得更加不聽話", "搬到了另一個森林"], answer: "覺得很慚愧，並向大家說對不起" }
@@ -589,12 +590,23 @@
         };
 
         // --- STREAMING_CHUNK:Initializing state variables and local storage syncing... ---
-        // --- INTIALIZATION ---
+        // --- INITIALIZATION ---
         window.addEventListener('DOMContentLoaded', () => {
             loadProgress();
             buildCalendar();
             loadExercise(currentDay);
+            
+            // Sync initial font size
             changeFontSize(fontSizeMode);
+
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.getVoices();
+                if (window.speechSynthesis.onvoiceschanged !== undefined) {
+                    window.speechSynthesis.onvoiceschanged = () => {
+                        window.speechSynthesis.getVoices();
+                    };
+                }
+            }
         });
 
         // Safe helpers for feedback & Mascot UI
@@ -888,7 +900,7 @@
                 const card = document.createElement('div');
                 card.className = "p-5 rounded-2xl border-2 border-slate-100 bg-slate-50/50 space-y-4";
 
-                // Split paragraph text by newline to render each sentence on its own row (Day 12, Day 6, Day 7 support)
+                // Split paragraph text by newline to render each sentence on its own row
                 const textLines = q.text.split('\n');
                 
                 const randomizedPairOptions = shuffleArray(q.options);
@@ -906,7 +918,6 @@
                     const textSpanContainer = document.createElement('div');
                     textSpanContainer.className = "leading-loose text-slate-800 font-extrabold flex-grow";
 
-                    // Prefix question number badge if it's the first line and qIdx === 0, or dynamically prefix line badge
                     if (textLines.length > 1) {
                         // Multiline - render inline text directly
                     } else {
@@ -972,7 +983,6 @@
                     // Add individual sentence TTS play button
                     const ttsBtn = document.createElement('button');
                     ttsBtn.className = "text-xs text-sky-600 bg-sky-50 border border-sky-200 px-2 py-1 rounded-full hover:bg-sky-100 font-bold flex items-center gap-1 flex-shrink-0 self-center";
-                    // Clean up parentheses numbers for audio readout
                     const cleanedLineAudio = lineText.replace(/（\s*\d+\s*）/g, " 填空 ");
                     ttsBtn.setAttribute('onclick', `speakSelectedText('${cleanedLineAudio.replace(/'/g, "\\'")}')`);
                     ttsBtn.innerHTML = `<i class="fa-solid fa-volume-high"></i> 🔊 讀句子`;
@@ -1002,7 +1012,7 @@
         }
 
         // --- STREAMING_CHUNK:Rendering punctuation inline flow... ---
-        // --- RENDER TYPE 3: PUNCTUATION DROPBOXES (Single Row Format Day 5) ---
+        // --- RENDER TYPE 3: PUNCTUATION DROPBOXES ---
         function renderPunctuationType(ex, workspace) {
             const container = document.createElement('div');
             container.className = "space-y-4";
@@ -1011,21 +1021,16 @@
                 const card = document.createElement('div');
                 card.className = "p-5 rounded-2xl border-2 border-slate-100 bg-slate-50/50 hover:bg-white transition-all space-y-3";
 
-                // We will split segments of Day 5 parts using custom list containers to ensure each numbered sentence is uniquely styled as one line row.
                 let currentRowDiv = document.createElement('div');
                 currentRowDiv.className = "py-2 border-b border-dashed border-sky-100 last:border-0 flex flex-wrap items-center justify-between gap-3 w-full leading-loose text-slate-800 font-extrabold";
 
                 q.parts.forEach((p, pIdx) => {
-                    // Check if text starts with \n. If yes, close existing currentRowDiv and open a new row div.
                     if (p.text && p.text.includes('\n')) {
-                        // Append current row before resetting
                         card.appendChild(currentRowDiv);
                         
-                        // New clean line row
                         currentRowDiv = document.createElement('div');
                         currentRowDiv.className = "py-2 border-b border-dashed border-sky-100 last:border-0 flex flex-wrap items-center justify-between gap-3 w-full leading-loose text-slate-800 font-extrabold";
                         
-                        // Strip newline indicator from display
                         const cleanPText = p.text.replace('\n', '');
                         const textSpan = document.createElement('span');
                         textSpan.textContent = cleanPText;
@@ -1076,10 +1081,9 @@
                     }
                 });
 
-                // Append trailing segment line row
                 card.appendChild(currentRowDiv);
 
-                // For each finished Row Div in card, let's append localized TTS buttons to make sentences individually playable!
+                // LOCALIZED TTS BUTTONS
                 Array.from(card.children).forEach(rowNode => {
                     const lineTextToSpeak = rowNode.textContent.replace(/\s+/g, ' ').replace(/？/g, ' 括號 ').trim();
                     const lineTtsBtn = document.createElement('button');
@@ -1110,7 +1114,7 @@
         }
 
         // --- STREAMING_CHUNK:Rendering reordering words layout... ---
-        // --- RENDER TYPE 4: REORDER WORD CARDS (With punctuation "。" added) ---
+        // --- RENDER TYPE 4: REORDER WORD CARDS ---
         function renderReorderType(ex, workspace) {
             const container = document.createElement('div');
             container.className = "space-y-6";
@@ -1143,17 +1147,14 @@
                 `;
                 card.appendChild(header);
 
-                // RESULT RECEPTACLE BOX
                 const targetArea = document.createElement('div');
                 targetArea.id = `reorder-target-${q.id}`;
                 targetArea.className = "min-h-[4.5rem] p-3 rounded-2xl border-2 border-dashed border-sky-200 bg-sky-50/20 flex flex-wrap items-center gap-2";
                 card.appendChild(targetArea);
 
-                // AVAILABLE WORD BUBBLES
                 const sourceArea = document.createElement('div');
                 sourceArea.className = "flex flex-wrap gap-2 pt-2 justify-center";
 
-                // Display randomly shuffled options (Ensure words array contains punctuation "。")
                 const displayPool = shuffleArray(q.words.map((w, idx) => ({ word: w, originalIndex: idx })));
 
                 displayPool.forEach((item) => {
@@ -1174,7 +1175,6 @@
 
                 card.appendChild(sourceArea);
 
-                // Line helper individual TTS Speaker button
                 const ttsBtn = document.createElement('button');
                 ttsBtn.className = "text-xs text-sky-600 bg-sky-50 border border-sky-200 px-2.5 py-1 rounded-full hover:bg-sky-100 font-bold flex items-center gap-1 flex-shrink-0 self-start";
                 const lineOutputToRead = q.correct.join(" ");
@@ -1191,7 +1191,6 @@
 
                 container.appendChild(card);
                 
-                // Load saved reorder state if any
                 setTimeout(() => {
                     if (isAnswerRevealed) {
                         const target = document.getElementById(`reorder-target-${q.id}`);
@@ -1218,17 +1217,14 @@
             playSound('click');
             const list = reorderSelections[qId] || [];
             
-            // Check if already selected
             const alreadySelIdx = list.findIndex(item => item.idx === index);
             if (alreadySelIdx > -1) {
-                // Remove from selections
                 list.splice(alreadySelIdx, 1);
                 const bubble = document.getElementById(`reorder-bubble-${qId}-${index}`);
                 if (bubble) {
                     bubble.className = "bg-white hover:bg-sky-50 text-sky-800 border-2 border-sky-100 px-4 py-2 rounded-2xl font-black text-sm shadow-sm hover:-translate-y-0.5 transition-all btn-bounce";
                 }
             } else {
-                // Add to selections
                 list.push({ idx: index, word: word });
                 const bubble = document.getElementById(`reorder-bubble-${qId}-${index}`);
                 if (bubble) {
@@ -1279,12 +1275,12 @@
         }
 
         // --- STREAMING_CHUNK:Rendering reading comprehension layout with text placed first... ---
-        // --- RENDER TYPE 5: READING COMPREHENSIONS (Passage rendered strict first!) ---
+        // --- RENDER TYPE 5: READING COMPREHENSIONS ---
         function renderReadingCompType(ex, workspace) {
             const container = document.createElement('div');
             container.className = "space-y-6";
 
-            // Render ARTICLE CARD FIRST (Day 10 & Day 14 requirement)
+            // ARTICLE CARD FIRST (置頂讀物)
             const pCard = document.createElement('div');
             pCard.className = "p-5 bg-gradient-to-br from-sky-50/50 to-blue-50/30 border-2 border-sky-200 rounded-3xl space-y-3";
             pCard.innerHTML = `
@@ -1298,7 +1294,7 @@
             `;
             container.appendChild(pCard);
 
-            // Render Questions AFTER the article
+            // Questions render
             ex.questions.forEach((q, qIdx) => {
                 const card = document.createElement('div');
                 card.className = "p-4 rounded-xl border-2 border-slate-100 bg-slate-50/50 hover:bg-white transition-all space-y-3";
@@ -1397,7 +1393,6 @@
         // --- STREAMING_CHUNK:Validating submitted answers and handling Direct Reveal... ---
         // --- SUBMIT AND VALIDATE ANSWER SCHEMES ---
         function validateAnswers() {
-            if (isAnswerRevealed) return;
             const ex = exercises[currentDay];
             if (!ex) return;
 
@@ -1421,6 +1416,7 @@
                         const userArr = q.answers.map((_, i) => ansMap[i] || "");
                         let localValid = true;
                         
+                        // Check if all slots are filled
                         if (userArr.includes("")) {
                             isDayCorrect = false;
                             localValid = false;
@@ -1487,8 +1483,12 @@
                 });
             }
 
+            // REVEAL LOGIC UPDATE
+            isAnswerRevealed = true; // Lock interactive states immediately on checking
+            loadExercise(currentDay); // Reload workspace to apply locking/coloring classes
+
             if (isDayCorrect || correctCount === questionsCount) {
-                // SUCCESS
+                // CORRECT
                 playSound('correct');
                 setMascotExpression('happy');
                 progress[currentDay] = true;
@@ -1496,10 +1496,10 @@
                 buildCalendar();
 
                 const lang = document.getElementById('tts-lang').value;
-                // Output updated praise string exactly as requested
                 const praise = "答對了，做得好！";
                 speakText(praise, lang);
 
+                // Show modal overlay
                 triggerConfetti();
                 showModal("答對了，做得好！🌟", `你順利完成了第 ${currentDay} 天的中文精讀大挑戰！獲得了一顆金星！樂樂兔為你驕傲！`);
 
@@ -1507,22 +1507,19 @@
                 document.getElementById('next-btn').classList.remove('hidden');
                 document.getElementById('status-message').classList.remove('hidden');
             } else {
-                // FAILURE ONCE -> Direct reveal, proceed permitted
+                // WRONG - No try again dialog, immediately reveal correct states
                 playSound('wrong');
                 setMascotExpression('sad');
 
-                isAnswerRevealed = true; // Turn on reveal state
-                loadExercise(currentDay); // Reload current screen under reveal styles
-
                 const lang = document.getElementById('tts-lang').value;
-                const encourage = lang === 'zh-HK' ? "唔緊要，正確答案已經顯示喺上面喇！" : "沒關係，正確答案已經顯示在上面囉！";
+                const encourage = lang === 'zh-HK' ? "唔緊要，看一看正確答案，再接再厲！" : "沒關係，看一看正確答案，再接再厲！";
                 speakText(encourage, lang);
 
-                setMascotFeedback(`🐰 呀，答對了 ${correctCount} 題，有部分還不太對。樂樂兔已經幫你把正確答案顯示出來囉！我們看一看正確答案，然後繼續挑戰下一天吧！`);
-                
-                // Hide submit and allow progress
+                setMascotFeedback(`🐰 呀，答對了 ${correctCount} 題。沒關係，樂樂兔已經為你標示了正確答案，一起學習吧！`);
+
                 document.getElementById('check-btn').classList.add('hidden');
                 document.getElementById('next-btn').classList.remove('hidden');
+                document.getElementById('status-message').classList.add('hidden');
             }
         }
 
@@ -1533,13 +1530,14 @@
             } else {
                 playSound('correct');
                 setMascotExpression('happy');
-                showModal("🏆 終極挑戰大通關！", "恭喜你！完美完成了 14 天的小一中文全部精讀挑戰！你已經是個中文小學霸了！🎉✨");
-                setMascotFeedback("🐰 太令人感動了！你順利完成了 14 天所有的中文挑戰！你真是一個勤奮又聰明的好孩子！🎉");
+                isFinalCelebration = true;
+                showModal("🏆 終極挑戰大通關！", "恭喜你！你已完成所有關卡，成為中文小達人！🎉✨");
+                setMascotFeedback("🐰 恭喜你！你已完成所有關卡，成為中文小達人！🏆");
             }
         }
 
         // --- STREAMING_CHUNK:Implementing Text to Speech controls... ---
-        // --- TTS SPEAKER MECHANISM ---
+        // --- TTS SPEAKER MECHANISM WITH ROBUST IPHONE MANDARIN VOICE DETECT ---
         function speakCurrentQuestion() {
             const ex = exercises[currentDay];
             if (!ex) return;
@@ -1565,8 +1563,30 @@
             utterance.lang = lang;
 
             const voices = window.speechSynthesis.getVoices();
-            let voice = voices.find(v => v.lang.startsWith(lang));
-            if (voice) utterance.voice = voice;
+            
+            // Advanced voice matching designed to prevent iPhone/iOS falling back to local accent (Cantonese)
+            let bestVoice = null;
+            if (lang === 'zh-CN') {
+                bestVoice = voices.find(v => {
+                    const name = v.name.toLowerCase();
+                    const vLang = v.lang.toLowerCase();
+                    return (vLang.includes('zh-cn') || vLang.includes('zh-chs') || vLang.includes('zh-hans') || name.includes('tingting') || name.includes('mandarin') || name.includes('putonghua') || name.includes('yating'));
+                });
+            } else if (lang === 'zh-HK') {
+                bestVoice = voices.find(v => {
+                    const name = v.name.toLowerCase();
+                    const vLang = v.lang.toLowerCase();
+                    return (vLang.includes('zh-hk') || vLang.includes('zh-cht') || vLang.includes('zh-hant') || name.includes('cantonese') || name.includes('sinji') || name.includes('sin-ji') || name.includes('hong kong'));
+                });
+            }
+
+            if (!bestVoice) {
+                bestVoice = voices.find(v => v.lang.toLowerCase().replace('_', '-').startsWith(lang.toLowerCase()));
+            }
+
+            if (bestVoice) {
+                utterance.voice = bestVoice;
+            }
 
             // Kid-friendly tone
             utterance.pitch = 1.25;
@@ -1634,6 +1654,10 @@
 
         function closeModal() {
             document.getElementById('reward-modal').classList.add('hidden');
+            if (isFinalCelebration) {
+                setMascotFeedback("🐰 恭喜你！你已完成所有關卡，成為中文小達人！🏆");
+                return;
+            }
             goToNextDay();
         }
 
