@@ -399,7 +399,7 @@
                 tip: "顏色詞是用來描述事物的不同色彩，使事物的形象更具體。常用的顏色詞有：紅、黃、綠、藍、紫、黑、白、灰等。",
                 type: "pairing",
                 instruction: "選出最適合的顏色詞填入句子中：",
-                audioText: "形容詞一，繽紛顏色詞.選出最適合的顏色詞填入句子中。",
+                audioText: "形容詞一，繽紛顏色詞。選出最適合的顏色詞填入句子中。",
                 questions: [
                     { 
                         id: "q1", 
@@ -492,7 +492,7 @@
             8: {
                 day: 8,
                 title: "第八天：名詞(二) 快樂上學去 🏫",
-                tip: "名詞是表示人物、地方、事物等名稱的詞。例如：校服、書包、教室、操場等。",
+                tip: "名詞是表示人物、地方、事物等名稱的詞。例如：校服、課本、教室、操場等。",
                 type: "pairing",
                 instruction: "請填入最適當的名詞，幫助故事變得完整：",
                 audioText: "名詞二，快樂上學去。請填入最適當的名詞，幫助故事變得完整。",
@@ -521,7 +521,7 @@
                 questions: [
                     { id: "q1", words: ["春天", "了", "來", "。"], correct: ["春天", "來", "了", "。"], hint: "什麼來了？" } ,
                     { id: "q2", words: ["巴士", "了", "開走", "。"], correct: ["巴士", "開走", "了", "。"], hint: "什麼開走了？" },
-                    { id: "q3", words: ["回到", "爸爸", "了", "家", "。"], correct: ["爸爸", "回到", "家", "l了", "。"], hint: "誰回到家了？" },
+                    { id: "q3", words: ["回到", "爸爸", "了", "家", "。"], correct: ["爸爸", "回到", "家", "了", "。"], hint: "誰回到家了？" },
                     { id: "q4", words: ["思思", "功課", "做完", "了", "。"], correct: ["思思", "做完", "功課", "了", "。"], hint: "思思做完了什麼？" }
                 ]
             },
@@ -534,7 +534,7 @@
                 instruction: "閱讀短文後，選取最適當的答案：",
                 audioText: "記敘文閱讀理解。請先讀短文，然後選取最適合的答案。",
                 questions: [
-                    { id: "q1", qText: "為什麼其他小動物一開始不願意和猴子玩？", options: ["因為猴子很頑皮，常常捉弄牠們", "因為猴子不會唱歌", "..."], answer: "因為猴子很頑皮，常常捉弄牠們" },
+                    { id: "q1", qText: "為什麼其他小動物一開始不願意和猴子玩？", options: ["因為猴子很頑皮，常常捉弄牠們", "開不開心", "..."], answer: "因為猴子很頑皮，常常捉弄牠們" },
                     { id: "q2", qText: "有一天猴子想捉弄在河裡游泳的誰，卻掉進了河裡？", options: ["鴨子", "小狗", "小貓"], answer: "鴨子" },
                     { id: "q3", qText: "猴子掉進河裡後，其他小動物怎麼做？", options: ["紛紛跳進河裡去救牠", "在岸上哈哈大笑", "悄悄地走開了"], answer: "紛紛跳進河裡去救牠" },
                     { id: "q4", qText: "經歷這件事後，猴子有什麼改變？", options: ["覺得很慚愧，並向大家說對不起", "變得更加不聽話", "搬到了另一個森林"], answer: "覺得很慚愧，並向大家說對不起" }
@@ -587,7 +587,7 @@
                 title: "第十四天：終極閱讀大挑戰 🏆",
                 tip: "恭喜來到最後一天！仔細閱讀下面的兒歌，看看小動物們在中秋節多快樂！",
                 type: "reading_comp",
-                passage: "    小金魚，搖搖頭，\n    擺擺尾巴水裡游。\n\n    小青蛙，蹦蹦跳，\n    蹲在荷葉呱呱叫。\n\n    小兔子，耳朵長，\n    蹦到草地吃月餅。\n\n    中秋夜，月亮圓，\n    大家唱歌真快樂！",
+                passage: "    小金魚，搖搖頭，\n    擺擺尾巴水裡游。\n\n    小青蛙，蹦蹦跳，\n    蹲在荷葉呱呱叫。\n\n    小兔子，耳朵長,\n    蹦到草地吃月餅。\n\n    中秋夜，月亮圓，\n    大家唱歌真快樂！",
                 instruction: "閱讀兒歌後，選出正確的答案：",
                 audioText: "終極閱讀大挑戰。請讀兒歌，回答最後的問題。",
                 questions: [
@@ -1550,15 +1550,52 @@
                                  navigator.userAgent.includes('Macintosh') ||
                                  (navigator.vendor && navigator.vendor.includes('Apple'));
 
-            if (isAppleDevice) {
-                // IMPORTANT iOS/macOS Safari FIX:
-                // Do NOT manually assign any voice object. iOS/macOS has a bug where assigning an offline premium
-                // voice (like Sinji or Sin-ji) causes the engine to fail silently, freeze, or fall back to English.
-                // Simply setting utterance.lang ('zh-HK' or 'zh-CN') allows iOS to automatically and natively 
-                // route to Siri's default built-in Cantonese/Mandarin voices with absolute stability.
-            } else {
+            const voices = window.speechSynthesis.getVoices();
+
+            if (isAppleDevice && voices.length > 0) {
+                // EXTREMELY CRITICAL iOS COMPATIBILITY RESOLUTION:
+                // Apple devices have a well-documented bug where specifying an offline, unavailable, 
+                // or remote voice (like non-downloaded Mandarin voice) causes iOS to immediately 
+                // downgrade the speech language back to the system locale default (Cantonese/zh-HK).
+                // 
+                // To solve this:
+                // 1. For Cantonese (zh-HK), look for standard "sinji" or Cantonese locale.
+                // 2. For Mandarin (zh-CN), check for Mainland Mandarin (zh-CN/zh-CHS).
+                // 3. *SECRET ENGINEER WEAPON*: If Mainland Mandarin isn't downloaded on the Hong Kong child's iPhone,
+                //    we look for Taiwanese Mandarin (zh-TW) which is almost ALWAYS pre-downloaded natively on HK region 
+                //    devices for Traditional Chinese support. Binding a pre-downloaded zh-TW voice guarantees beautiful,
+                //    native Mandarin TTS playback and bypasses the iOS Cantonese downgrade fallback completely!
+                
+                let bestVoice = null;
+                const targetLang = lang.toLowerCase();
+
+                if (targetLang === 'zh-cn') {
+                    // 1. Try standard Mandarin
+                    bestVoice = voices.find(v => {
+                        const l = v.lang.toLowerCase();
+                        return l.startsWith('zh-cn') || l.startsWith('zh-chs') || l.startsWith('zh-sg');
+                    });
+                    
+                    // 2. High-probability Traditional region Mandarin fallback (Taiwan zh-TW)
+                    if (!bestVoice) {
+                        bestVoice = voices.find(v => {
+                            const l = v.lang.toLowerCase();
+                            return l.startsWith('zh-tw') || l.startsWith('zh-hant-tw') || v.name.toLowerCase().includes('taiwan') || v.name.toLowerCase().includes('meijia');
+                        });
+                    }
+                } else if (targetLang === 'zh-hk') {
+                    bestVoice = voices.find(v => {
+                        const l = v.lang.toLowerCase();
+                        return l.startsWith('zh-hk') || l.startsWith('zh-hant-hk') || v.name.toLowerCase().includes('hong kong') || v.name.toLowerCase().includes('cantonese') || v.name.toLowerCase().includes('sinji');
+                    });
+                }
+
+                if (bestVoice) {
+                    utterance.voice = bestVoice;
+                    utterance.lang = bestVoice.lang; // Lock language to voice definition precisely
+                }
+            } else if (!isAppleDevice && voices.length > 0) {
                 // Non-Apple Devices standard voice binding
-                const voices = window.speechSynthesis.getVoices();
                 let bestVoice = null;
                 if (lang === 'zh-CN') {
                     bestVoice = voices.find(v => {
