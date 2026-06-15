@@ -351,7 +351,7 @@
                     { id: "q1", text: "目 + 民 = ", options: ["眠", "眼", "睛", "民"], answer: "眠", hint: "跟睡覺（合上眼睛）有關哦！" },
                     { id: "q2", text: "女 + 乃 = ", options: ["媽", "奶", "姐", "妹"], answer: "奶", hint: "喝牛奶，或者是叫奶奶！" },
                     { id: "q3", text: "耳 + 又 = ", options: ["取", "最", "聯", "聰"], answer: "取", hint: "拿取、取得的意思。" },
-                    { id: "q4", text: "日 + 月 = ", options: ["明", "朋", "唱", "晴"], answer: "明", hint: "明天、明亮，有太陽和月亮。" }
+                    { id: "q4", text: "日 + 月 = ", options: ["明", "朋", "唱", "晴"], answer: "明", hint: "明天、明亮，有太陽 and 月亮。" }
                 ]
             },
             2: {
@@ -467,7 +467,7 @@
                     },
                     { 
                         id: "q2", 
-                        text: "7. 弟弟累了，便躺在牀上休（ 0 ）。\n8. 教室裏掛滿了五顏六（ 1 ）的彩旗。\n9. 你懂得計算這道算（ 2 ）嗎？\n10. 外公每天做運動，（ 3 ）神很好。\n11. 我跟哥哥一樣，有一雙小眼（ 4 ）。\n12. 這顆寶石瑩（ 5 ）光亮，十分美麗。", 
+                        text: "7. 弟弟累了，便躺在牀上休（ 0 ）。\n8. 教室裏掛滿了五顏六（ 1 ）的彩旗。\n9. 你懂得計算這道算（ 2 ）嗎？\n10. 外公每天做運動，（ 3 ）神很好。\n11. 我跟哥哥一樣，有一雙小眼（ 4 ）。\n12. 這顆寶石（ 5 ）瑩光亮，十分美麗。", 
                         options: ["息", "色", "式", "精", "睛", "晶"], 
                         answers: ["息", "色", "式", "精", "睛", "晶"] 
                     }
@@ -492,7 +492,7 @@
             8: {
                 day: 8,
                 title: "第八天：名詞(二) 快樂上學去 🏫",
-                tip: "名詞是表示人物、地方、事物等名稱的詞。例如：校服、課本、教室、操場等。",
+                tip: "名詞是表示人物、地方、事物等名稱的詞.例如：校服、課本、教室、操場等。",
                 type: "pairing",
                 instruction: "請填入最適當的名詞，幫助故事變得完整：",
                 audioText: "名詞二，快樂上學去。請填入最適當的名詞，幫助故事變得完整。",
@@ -1498,7 +1498,7 @@
                 const encourage = lang === 'zh-HK' ? "唔緊要，看一看正確答案，再接再厲！" : "沒關係，看一看正確答案，再接再厲！";
                 speakText(encourage, lang);
 
-                setMascotFeedback(`🐰 呀，答對了 ${correctCount} 題。沒關係，樂樂兔已經為你標示了正確答案，一起學習吧！`);
+                setMascotFeedback("🐰 呀，答對了 " + correctCount + " 題。沒關係，樂樂兔已經為你標示了正確答案，一起學習吧！");
 
                 document.getElementById('check-btn').classList.add('hidden');
                 document.getElementById('next-btn').classList.remove('hidden');
@@ -1519,7 +1519,7 @@
             }
         }
 
-        // --- TTS SPEAKER MECHANISM WITH ROBUST IPHONE MANDARIN VOICE DETECT ---
+        // --- TTS SPEAKER MECHANISM WITH iOS STANDARD-FALLBACK BYPASS ---
         function speakCurrentQuestion() {
             const ex = exercises[currentDay];
             if (!ex) return;
@@ -1527,7 +1527,6 @@
             speakText(ex.audioText, lang);
         }
 
-        // Dedicated helper to clean speech outputs on iOS
         function speakMascotFeedback() {
             const feedback = document.getElementById('lele-feedback').textContent;
             const lang = document.getElementById('tts-lang').value;
@@ -1545,30 +1544,54 @@
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = lang;
 
-            const voices = window.speechSynthesis.getVoices();
-            
-            // Advanced voice matching designed to prevent iPhone/iOS falling back to Cantonese
-            let bestVoice = null;
-            if (lang === 'zh-CN') {
-                bestVoice = voices.find(v => {
-                    const name = v.name.toLowerCase();
-                    const vLang = v.lang.toLowerCase();
-                    return (vLang === 'zh-cn' || vLang === 'zh-hans-cn' || name.includes('tingting') || name.includes('liting') || name.includes('mainland') || name.includes('putonghua') || name.includes('xiaoxiao'));
-                });
-            } else if (lang === 'zh-HK') {
-                bestVoice = voices.find(v => {
-                    const name = v.name.toLowerCase();
-                    const vLang = v.lang.toLowerCase();
-                    return (vLang === 'zh-hk' || vLang === 'zh-hant-hk' || name.includes('sin-ji') || name.includes('sinji') || name.includes('cantonese') || name.includes('hong kong'));
-                });
-            }
+            // iOS-specific voice matching bypass to prevent Cantonese fallback bug on Apple devices
+            const isAppleDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                                 (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ||
+                                 navigator.userAgent.includes('Macintosh');
 
-            if (!bestVoice) {
-                bestVoice = voices.find(v => v.lang.toLowerCase().replace('_', '-').startsWith(lang.toLowerCase()));
-            }
+            if (isAppleDevice) {
+                // IMPORTANT iOS FIX: Do NOT manually assign a voice object if we are on iOS and speaking Mandarin.
+                // Apple devices have a bug where assigning an offline premium voice forces fallback to system default (Cantonese).
+                // Setting only utterance.lang = 'zh-CN' lets iOS internally resolve to the working system Mandarin voice.
+                if (lang === 'zh-CN') {
+                    // Just set lang and do NOT set voice. iOS will natively use Siri Mandarin beautifully!
+                } else {
+                    // For Cantonese, set the lang, or trySinji
+                    const voices = window.speechSynthesis.getVoices();
+                    const cantoneseVoice = voices.find(v => {
+                        const name = v.name.toLowerCase();
+                        const vLang = v.lang.toLowerCase();
+                        return (vLang === 'zh-hk' || vLang === 'zh-hant-hk' || name.includes('sinji') || name.includes('sin-ji') || name.includes('cantonese') || name.includes('hong kong'));
+                    });
+                    if (cantoneseVoice) {
+                        utterance.voice = cantoneseVoice;
+                    }
+                }
+            } else {
+                // Non-Apple Devices standard voice binding
+                const voices = window.speechSynthesis.getVoices();
+                let bestVoice = null;
+                if (lang === 'zh-CN') {
+                    bestVoice = voices.find(v => {
+                        const name = v.name.toLowerCase();
+                        const vLang = v.lang.toLowerCase();
+                        return (vLang === 'zh-cn' || vLang === 'zh-hans-cn' || name.includes('tingting') || name.includes('liting') || name.includes('mainland') || name.includes('putonghua') || name.includes('xiaoxiao'));
+                    });
+                } else if (lang === 'zh-HK') {
+                    bestVoice = voices.find(v => {
+                        const name = v.name.toLowerCase();
+                        const vLang = v.lang.toLowerCase();
+                        return (vLang === 'zh-hk' || vLang === 'zh-hant-hk' || name.includes('sin-ji') || name.includes('sinji') || name.includes('cantonese') || name.includes('hong kong'));
+                    });
+                }
 
-            if (bestVoice) {
-                utterance.voice = bestVoice;
+                if (!bestVoice) {
+                    bestVoice = voices.find(v => v.lang.toLowerCase().replace('_', '-').startsWith(lang.toLowerCase()));
+                }
+
+                if (bestVoice) {
+                    utterance.voice = bestVoice;
+                }
             }
 
             // Kid-friendly tone parameters
