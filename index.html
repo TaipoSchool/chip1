@@ -130,12 +130,11 @@
                             第 1 天挑戰
                         </span>
                         
-                        <!-- TTS controls -->
+                        <!-- TTS controls (Cantonese only now, simplified) -->
                         <div class="flex items-center gap-2">
-                            <select id="tts-lang" class="bg-white rounded-lg border border-sky-300 text-xs font-bold p-1 focus:outline-none" onchange="saveLanguagePreference()">
-                                <option value="zh-HK" selected>廣東話 (Default)</option>
-                                <option value="zh-CN">普通話 (Mandarin)</option>
-                            </select>
+                            <span class="text-xs text-sky-600 font-black bg-sky-100 px-3 py-1.5 rounded-full">
+                                <i class="fa-solid fa-microphone mr-1"></i> 廣東話朗讀 已啟用
+                            </span>
                             <button id="tts-btn" onclick="speakCurrentQuestion()" class="bg-white hover:bg-sky-100 text-sky-600 border-2 border-sky-300 rounded-full w-9 h-9 flex items-center justify-center comic-shadow btn-bounce" title="朗讀大綱">
                                 <i class="fa-solid fa-volume-high"></i>
                             </button>
@@ -213,7 +212,7 @@
                             </p>
                         </div>
                         <button onclick="speakMascotFeedback()" class="mt-2 flex items-center text-xs text-sky-600 hover:text-sky-800 font-extrabold gap-1 animate-pulse">
-                            <i class="fa-solid fa-volume-high"></i> 🔊 聽聽樂樂兔朗讀
+                            <i class="fa-solid fa-volume-high"></i> 🔊 聽聽樂樂兔廣東話朗讀
                         </button>
                     </div>
                 </div>
@@ -642,16 +641,12 @@
 
         function loadProgress() {
             const savedProg = localStorage.getItem('lele_rabbit_progress');
-            const savedLang = localStorage.getItem('lele_rabbit_tts_lang');
             const savedFont = localStorage.getItem('lele_rabbit_font');
             
             if (savedProg) {
                 try { progress = JSON.parse(savedProg); } catch(e) { progress = {}; }
             } else {
                 progress = { 1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true, 8: true, 9: true, 10: true };
-            }
-            if (savedLang) {
-                document.getElementById('tts-lang').value = savedLang;
             }
             if (savedFont) {
                 fontSizeMode = savedFont;
@@ -662,12 +657,6 @@
         function saveProgress() {
             localStorage.setItem('lele_rabbit_progress', JSON.stringify(progress));
             updateStarCounter();
-        }
-
-        function saveLanguagePreference() {
-            const val = document.getElementById('tts-lang').value;
-            localStorage.setItem('lele_rabbit_tts_lang', val);
-            playSound('click');
         }
 
         function updateStarCounter() {
@@ -816,9 +805,8 @@
 
         // --- AUDIO HELPERS FOR INDIVIDUAL QUESTIONS/SENTENCES ---
         function speakSelectedText(text) {
-            const lang = document.getElementById('tts-lang').value;
             const cleanText = text.replace(/（\s*\d+\s*）/g, " 括號 ").replace(/\[\s*\?\s*\]/g, " 括號 ");
-            speakText(cleanText, lang);
+            speakText(cleanText);
         }
 
         // --- RENDER TYPE 1: CLOZE MCQs ---
@@ -1480,9 +1468,8 @@
                 saveProgress();
                 buildCalendar();
 
-                const lang = document.getElementById('tts-lang').value;
                 const praise = "答對了，做得好！";
-                speakText(praise, lang);
+                speakText(praise);
 
                 triggerConfetti();
                 showModal("答對了，做得好！🌟", `你順利完成了第 ${currentDay} 天的中文精讀大挑戰！獲得了一顆金星！樂樂兔為你驕傲！`);
@@ -1494,9 +1481,8 @@
                 playSound('wrong');
                 setMascotExpression('sad');
 
-                const lang = document.getElementById('tts-lang').value;
-                const encourage = lang === 'zh-HK' ? "唔緊要，看一看正確答案，再接再厲！" : "沒關係，看一看正確答案，再接再厲！";
-                speakText(encourage, lang);
+                const encourage = "唔緊要，看一看正確答案，再接再厲！";
+                speakText(encourage);
 
                 setMascotFeedback("🐰 呀，答對了 " + correctCount + " 題。沒關係，樂樂兔已經為你標示了正確答案，一起學習吧！");
 
@@ -1519,21 +1505,19 @@
             }
         }
 
-        // --- TTS SPEAKER MECHANISM WITH iOS STANDARD-FALLBACK BYPASS ---
+        // --- TTS SPEAKER MECHANISM WITH CANTONESE SPECIALTY FILTER ---
         function speakCurrentQuestion() {
             const ex = exercises[currentDay];
             if (!ex) return;
-            const lang = document.getElementById('tts-lang').value;
-            speakText(ex.audioText, lang);
+            speakText(ex.audioText);
         }
 
         function speakMascotFeedback() {
             const feedback = document.getElementById('lele-feedback').textContent;
-            const lang = document.getElementById('tts-lang').value;
-            speakText(feedback, lang);
+            speakText(feedback);
         }
 
-        function speakText(text, lang) {
+        function speakText(text) {
             if (!('speechSynthesis' in window)) {
                 console.warn('Speech synthesis not supported on this browser.');
                 return;
@@ -1542,7 +1526,7 @@
             window.speechSynthesis.cancel(); // Terminate existing voices
 
             const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = lang;
+            utterance.lang = "zh-HK"; // Strongly locked to Cantonese
 
             // iOS / macOS / Safari environment detection
             const isAppleDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
@@ -1553,67 +1537,23 @@
             const voices = window.speechSynthesis.getVoices();
 
             if (isAppleDevice && voices.length > 0) {
-                // EXTREMELY CRITICAL iOS COMPATIBILITY RESOLUTION:
-                // Apple devices have a well-documented bug where specifying an offline, unavailable, 
-                // or remote voice (like non-downloaded Mandarin voice) causes iOS to immediately 
-                // downgrade the speech language back to the system locale default (Cantonese/zh-HK).
-                // 
-                // To solve this:
-                // 1. For Cantonese (zh-HK), look for standard "sinji" or Cantonese locale.
-                // 2. For Mandarin (zh-CN), check for Mainland Mandarin (zh-CN/zh-CHS).
-                // 3. *SECRET ENGINEER WEAPON*: If Mainland Mandarin isn't downloaded on the Hong Kong child's iPhone,
-                //    we look for Taiwanese Mandarin (zh-TW) which is almost ALWAYS pre-downloaded natively on HK region 
-                //    devices for Traditional Chinese support. Binding a pre-downloaded zh-TW voice guarantees beautiful,
-                //    native Mandarin TTS playback and bypasses the iOS Cantonese downgrade fallback completely!
-                
-                let bestVoice = null;
-                const targetLang = lang.toLowerCase();
-
-                if (targetLang === 'zh-cn') {
-                    // 1. Try standard Mandarin
-                    bestVoice = voices.find(v => {
-                        const l = v.lang.toLowerCase();
-                        return l.startsWith('zh-cn') || l.startsWith('zh-chs') || l.startsWith('zh-sg');
-                    });
-                    
-                    // 2. High-probability Traditional region Mandarin fallback (Taiwan zh-TW)
-                    if (!bestVoice) {
-                        bestVoice = voices.find(v => {
-                            const l = v.lang.toLowerCase();
-                            return l.startsWith('zh-tw') || l.startsWith('zh-hant-tw') || v.name.toLowerCase().includes('taiwan') || v.name.toLowerCase().includes('meijia');
-                        });
-                    }
-                } else if (targetLang === 'zh-hk') {
-                    bestVoice = voices.find(v => {
-                        const l = v.lang.toLowerCase();
-                        return l.startsWith('zh-hk') || l.startsWith('zh-hant-hk') || v.name.toLowerCase().includes('hong kong') || v.name.toLowerCase().includes('cantonese') || v.name.toLowerCase().includes('sinji');
-                    });
-                }
+                // Seek Standard Cantonese Siri / Sinji voices natively prebuilt in Hong Kong Region iOS
+                const bestVoice = voices.find(v => {
+                    const l = v.lang.toLowerCase();
+                    return l.startsWith('zh-hk') || l.startsWith('zh-hant-hk') || v.name.toLowerCase().includes('hong kong') || v.name.toLowerCase().includes('cantonese') || v.name.toLowerCase().includes('sinji');
+                });
 
                 if (bestVoice) {
                     utterance.voice = bestVoice;
-                    utterance.lang = bestVoice.lang; // Lock language to voice definition precisely
+                    utterance.lang = bestVoice.lang; // Guarantee lock
                 }
             } else if (!isAppleDevice && voices.length > 0) {
-                // Non-Apple Devices standard voice binding
-                let bestVoice = null;
-                if (lang === 'zh-CN') {
-                    bestVoice = voices.find(v => {
-                        const name = v.name.toLowerCase();
-                        const vLang = v.lang.toLowerCase();
-                        return (vLang === 'zh-cn' || vLang === 'zh-hans-cn' || name.includes('tingting') || name.includes('liting') || name.includes('mainland') || name.includes('putonghua') || name.includes('xiaoxiao'));
-                    });
-                } else if (lang === 'zh-HK') {
-                    bestVoice = voices.find(v => {
-                        const name = v.name.toLowerCase();
-                        const vLang = v.lang.toLowerCase();
-                        return (vLang === 'zh-hk' || vLang === 'zh-hant-hk' || name.includes('sin-ji') || name.includes('sinji') || name.includes('cantonese') || name.includes('hong kong'));
-                    });
-                }
-
-                if (!bestVoice) {
-                    bestVoice = voices.find(v => v.lang.toLowerCase().replace('_', '-').startsWith(lang.toLowerCase()));
-                }
+                // Non-Apple fallback seek for Cantonese
+                const bestVoice = voices.find(v => {
+                    const name = v.name.toLowerCase();
+                    const vLang = v.lang.toLowerCase();
+                    return (vLang === 'zh-hk' || vLang === 'zh-hant-hk' || name.includes('sin-ji') || name.includes('sinji') || name.includes('cantonese') || name.includes('hong kong'));
+                });
 
                 if (bestVoice) {
                     utterance.voice = bestVoice;
@@ -1624,7 +1564,7 @@
             utterance.pitch = 1.15;
             utterance.rate = 0.95;
 
-            // Tiny timeout avoids SpeechSynthesis lock up in Safari iOS
+            // Small delay to prevent Safari queue conflict
             setTimeout(() => {
                 window.speechSynthesis.speak(utterance);
             }, 50);
