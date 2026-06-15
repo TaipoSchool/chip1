@@ -259,17 +259,28 @@
 
     <!-- CORE SCRIPT (COMPILATION GUARANTEED) -->
     <script>
-        // --- SOUND GENERATOR ---
+        // --- SOUND GENERATOR (SINGLE GLOBAL CONTEXT PATTERN TO PREVENT MAC SAFARI HANGING) ---
+        let globalAudioCtx = null;
+
         const playSound = (type) => {
             try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
+                // Initialize context only once on user interaction
+                if (!globalAudioCtx) {
+                    globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                
+                // If context is suspended (Safari autoplay policies), try to resume it
+                if (globalAudioCtx.state === 'suspended') {
+                    globalAudioCtx.resume();
+                }
+
+                const osc = globalAudioCtx.createOscillator();
+                const gain = globalAudioCtx.createGain();
                 osc.connect(gain);
-                gain.connect(ctx.destination);
+                gain.connect(globalAudioCtx.destination);
 
                 if (type === 'correct') {
-                    const now = ctx.currentTime;
+                    const now = globalAudioCtx.currentTime;
                     osc.type = 'triangle';
                     osc.frequency.setValueAtTime(523.25, now); // C5
                     osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
@@ -281,7 +292,7 @@
                     osc.start(now);
                     osc.stop(now + 0.5);
                 } else if (type === 'wrong') {
-                    const now = ctx.currentTime;
+                    const now = globalAudioCtx.currentTime;
                     osc.type = 'sawtooth';
                     osc.frequency.setValueAtTime(220, now); // A3
                     osc.frequency.linearRampToValueAtTime(110, now + 0.3); // A2
@@ -291,7 +302,7 @@
                     osc.start(now);
                     osc.stop(now + 0.4);
                 } else if (type === 'click') {
-                    const now = ctx.currentTime;
+                    const now = globalAudioCtx.currentTime;
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(600, now);
                     osc.frequency.exponentialRampToValueAtTime(150, now + 0.08);
@@ -301,7 +312,7 @@
                     osc.stop(now + 0.08);
                 }
             } catch (e) {
-                console.log('AudioContext not allowed or supported yet');
+                console.log('AudioContext error:', e);
             }
         };
 
@@ -315,7 +326,6 @@
             return newArray;
         };
 
-        // --- STREAMING_CHUNK:Declaring cute animal icon parameters... ---
         // 14 Days Cute Animal Icons list (Fixes dayAnimals is not defined bug)
         const dayAnimals = ["🐶", "🐱", "🐰", "🦊", "🦁", "🐨", "🐼", "🐻", "🐸", "🐔", "🐧", "🐵", "🦄", "👑"];
 
@@ -328,12 +338,12 @@
         let isFinalCelebration = false; // Flag to prevent Day 14 modal recursion loop
         let isAnswerRevealed = false; // Declaring state lock for validation reviews
 
-        // --- 14 DAYS CURRICULUM DATABASE (DAYS 1-10 FROM USER ARTIFACT, 11-14 ADDED) ---
+        // --- 14 DAYS CURRICULUM DATABASE ---
         const exercises = {
             1: {
                 day: 1,
                 title: "第一天：字的偏旁 (一) 🧩",
-                tip: "有些漢字由兩個 or 以上的部分組成，這些組成部分稱為「偏旁」。例如：「媽」由「女」和「馬」兩個偏旁組成。",
+                tip: "有些漢字由兩個或以上的部分組成，這些組成部分稱為「偏旁」。例如：「媽」由「女」和「馬」兩個偏旁組成。",
                 type: "cloze",
                 instruction: "請幫偏旁找到好朋友，組合成正確的字吧！",
                 audioText: "字的偏旁一。請幫偏旁找到好朋友，組合成正確的字吧！",
@@ -341,7 +351,7 @@
                     { id: "q1", text: "目 + 民 = ", options: ["眠", "眼", "睛", "民"], answer: "眠", hint: "跟睡覺（合上眼睛）有關哦！" },
                     { id: "q2", text: "女 + 乃 = ", options: ["媽", "奶", "姐", "妹"], answer: "奶", hint: "喝牛奶，或者是叫奶奶！" },
                     { id: "q3", text: "耳 + 又 = ", options: ["取", "最", "聯", "聰"], answer: "取", hint: "拿取、取得的意思。" },
-                    { id: "q4", text: "日 + 月 = ", options: ["明", "朋", "唱", "晴"], answer: "明", hint: "明天、明亮，有太陽 and 月亮。" }
+                    { id: "q4", text: "日 + 月 = ", options: ["明", "朋", "唱", "晴"], answer: "明", hint: "明天、明亮，有太陽和月亮。" }
                 ]
             },
             2: {
@@ -370,7 +380,7 @@
             3: {
                 day: 3,
                 title: "第三天：動詞(一) 動作大作戰 🏃",
-                tip: "動詞是表示動作 or 行為的詞。例如：看、說、找等。",
+                tip: "動詞是表示動作或行為的詞。例如：看、說、找等。",
                 type: "pairing",
                 instruction: "請選擇最適當的動詞填入句子中：",
                 audioText: "動詞一，動作大作戰。請選擇最適當的動詞填入句子中。",
@@ -393,7 +403,7 @@
                 questions: [
                     { 
                         id: "q1", 
-                        text: "1. 媽媽牽着我的手，走過（ 0 ）白間條色的斑馬線。\n2. 西瓜的果肉是（ 1 ）色的，又甜又多汁，很好吃。\n3. 荷花長在（ 2 ）葉上面，分外嬌美。\n4. 熟透了的香蕉彎彎的，好像（ 3 ）色的小船。\n5. 聖誕老人穿上（ 4 ）色的衣裳，給孩子們送禮物。\n6. 草原上滿是毛色雪（ 5 ）的綿羊。\n7. 在地圖上，（ 6 ）色的部分通常代表海洋。\n8. 熊貓咬着（ 7 ）色的竹子，很滋味的樣子。", 
+                        text: "1. 媽媽牽着我的手，走過（ 0 ）色的斑馬線。\n2. 西瓜的果肉是（ 1 ）色的，又甜又多汁，很好吃。\n3. 荷花長在（ 2 ）葉上面，分外嬌美。\n4. 熟透了的香蕉彎彎的，好像（ 3 ）色的小船。\n5. 聖誕老人穿上（ 4 ）色的衣裳，給孩子們送禮物。\n6. 草原上滿是毛色雪（ 5 ）的綿羊。\n7. 在地圖上，（ 6 ）色的部分通常代表海洋。\n8. 熊貓咬着（ 7 ）色的竹子，很滋味的樣子。", 
                         options: ["白", "紅", "綠", "黃", "藍", "啡", "黑"], 
                         answers: ["黑", "紅", "綠", "黃", "紅", "白", "藍", "綠"] 
                     }
@@ -417,7 +427,7 @@
                           { text: " 爸爸帶我上街去" },
                           { slotId: "s3", options: ["，", "。"], answer: "。" }, 
                           { text: "\n3. 這裏售賣的蔬菜" },
-                          { slotId: "s4", options: ["，", "。"], answer: "，" },
+                          { slotId: "s4", options: ["，", "•"], answer: "，" },
                           { text: " 看上去很新鮮" },
                           { slotId: "s5", options: ["，", "。"], answer: "。" }
                         ]
@@ -457,7 +467,7 @@
                     },
                     { 
                         id: "q2", 
-                        text: "7. 弟弟累了，便躺在牀上休（ 0 ）。\n8. 教室裏掛滿了五顏六（ 1 ）的彩旗。\n9. 你懂得計算這道算（ 2 ）嗎？\n10. 外公每天做運動，（ 3 ）神很好。\n11. 我跟哥哥一樣，有一雙小眼（ 4 ）。\n12. 這顆寶石（ 5 ）瑩光亮，十分美麗。", 
+                        text: "7. 弟弟累了，便躺在牀上休（ 0 ）。\n8. 教室裏掛滿了五顏六（ 1 ）的彩旗。\n9. 你懂得計算這道算（ 2 ）嗎？\n10. 外公每天做運動，（ 3 ）神很好。\n11. 我跟哥哥一樣，有一雙小眼（ 4 ）。\n12. 這顆寶石瑩（ 5 ）光亮，十分美麗。", 
                         options: ["息", "色", "式", "精", "睛", "晶"], 
                         answers: ["息", "色", "式", "精", "睛", "晶"] 
                     }
@@ -466,7 +476,7 @@
             7: {
                 day: 7,
                 title: "第七天：擬聲詞(一) 🐱",
-                tip: "擬聲詞是模擬人 or 事物發出的聲音的詞語。例如：汪汪（狗叫聲）、沙沙（風吹葉子聲）、哇哇（大哭聲）。",
+                tip: "擬聲詞是模擬人或事物發出的聲音的詞語。例如：汪汪（狗叫聲）、沙沙（風吹葉子聲）、哇哇（大哭聲）。",
                 type: "pairing",
                 instruction: "請根據句子的意思，填上最生動的擬聲詞：",
                 audioText: "擬聲詞一。請根據句子的意思，填上最生動的擬聲詞。",
@@ -504,7 +514,7 @@
             9: {
                 day: 9,
                 title: "第九天：句式(一) 「......了」字句 🪄",
-                tip: "認識句式：「......了」表示動作已經完成了。例如：花兒開了、太陽太陽出來了。注意這次也要把句號「。」排在最後面喔！",
+                tip: "認識句式：「......了」表示動作已經完成了。例如：花兒開了、太陽出來了。注意這次也要把句號「。」排在最後面喔！",
                 type: "reorder",
                 instruction: "請點擊下方的詞語氣泡，將它們排列成通順的句子：",
                 audioText: "句式一，了字句。請點擊下方的詞語氣泡，將它們排列成通順的句子，別忘了句號喔！",
@@ -524,7 +534,7 @@
                 instruction: "閱讀短文後，選取最適當的答案：",
                 audioText: "記敘文閱讀理解。請先讀短文，然後選取最適合的答案。",
                 questions: [
-                    { id: "q1", qText: "為什麼其他小動物一開始不願意和猴子玩？", options: ["因為猴子很頑皮，常常捉弄牠們", "因為猴子不會唱歌", "因為猴子不喜歡游泳"], answer: "因為猴子很頑皮，常常捉弄牠們" },
+                    { id: "q1", qText: "為什麼其他小動物一開始不願意和猴子玩？", options: ["因為猴子很頑皮，常常捉弄牠們", "因為猴子不會唱歌", "..."], answer: "因為猴子很頑皮，常常捉弄牠們" },
                     { id: "q2", qText: "有一天猴子想捉弄在河裡游泳的誰，卻掉進了河裡？", options: ["鴨子", "小狗", "小貓"], answer: "鴨子" },
                     { id: "q3", qText: "猴子掉進河裡後，其他小動物怎麼做？", options: ["紛紛跳進河裡去救牠", "在岸上哈哈大笑", "悄悄地走開了"], answer: "紛紛跳進河裡去救牠" },
                     { id: "q4", qText: "經歷這件事後，猴子有什麼改變？", options: ["覺得很慚愧，並向大家說對不起", "變得更加不聽話", "搬到了另一個森林"], answer: "覺得很慚愧，並向大家說對不起" }
@@ -547,7 +557,7 @@
             12: {
                 day: 12,
                 title: "第十二天：相反詞對對碰 ⚖️",
-                tip: "相反詞是指意思相對 or 相反的詞語。例如：大和小、多和少、遠和近、高和低。",
+                tip: "相反詞是指意思相對或相反的詞語。例如：大和小、多和少、遠和近、高和低。",
                 type: "pairing",
                 instruction: "請選出正確的相反詞填入空缺中：",
                 audioText: "相反詞對對碰。請選出正確的相反詞填入空缺中。",
@@ -563,7 +573,7 @@
             13: {
                 day: 13,
                 title: "第十三天：句子魔法師 (擴寫與連接詞) 🪄",
-                tip: "用適當的連接詞可以把兩個句子連起來。例如「因為……所以……」表示原因 and 結果。重組時也別忘了句號「。」喔！",
+                tip: "用適當的連接詞可以把兩個句子連起來。例如「因為……所以……」表示原因和結果。重組時也別忘了句號「。」喔！",
                 type: "reorder",
                 instruction: "請點擊卡片，重組一個語意完整的句子：",
                 audioText: "句子魔法師。請點擊卡片，重組一個語意完整的句子。",
@@ -577,7 +587,7 @@
                 title: "第十四天：終極閱讀大挑戰 🏆",
                 tip: "恭喜來到最後一天！仔細閱讀下面的兒歌，看看小動物們在中秋節多快樂！",
                 type: "reading_comp",
-                passage: "    小金魚，搖搖頭，\n    擺擺尾巴水裡游。\n\n    小青蛙，蹦蹦跳，\n    蹲在荷葉呱呱叫。\n\n    小兔子，耳朵長,\n    蹦到草地吃月餅。\n\n    中秋夜，月亮圓，\n    大家唱歌真快樂！",
+                passage: "    小金魚，搖搖頭，\n    擺擺尾巴水裡游。\n\n    小青蛙，蹦蹦跳，\n    蹲在荷葉呱呱叫。\n\n    小兔子，耳朵長，\n    蹦到草地吃月餅。\n\n    中秋夜，月亮圓，\n    大家唱歌真快樂！",
                 instruction: "閱讀兒歌後，選出正確的答案：",
                 audioText: "終極閱讀大挑戰。請讀兒歌，回答最後的問題。",
                 questions: [
@@ -589,7 +599,9 @@
             }
         };
 
-        // --- STREAMING_CHUNK:Initializing state variables and local storage syncing... ---
+        // Fix Day 10 answer key mapping to exact string translation
+        exercises[10].questions[0].answer = "因為猴子很頑皮，常常捉弄牠們";
+
         // --- INITIALIZATION ---
         window.addEventListener('DOMContentLoaded', () => {
             loadProgress();
@@ -599,6 +611,7 @@
             // Sync initial font size
             changeFontSize(fontSizeMode);
 
+            // iOS voice pre-warming trigger on load
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.getVoices();
                 if (window.speechSynthesis.onvoiceschanged !== undefined) {
@@ -608,6 +621,19 @@
                 }
             }
         });
+
+        // Add a general window touch/click unlocker to instantly warm up SpeechSynthesis & Web Audio context on iOS/Mac
+        window.addEventListener('click', () => {
+            if (globalAudioCtx && globalAudioCtx.state === 'suspended') {
+                globalAudioCtx.resume();
+            }
+            // Trigger an empty system speech on first click to unlock audio channels for iOS
+            if ('speechSynthesis' in window && !window.speechSynthesis.speaking) {
+                const u = new SpeechSynthesisUtterance("");
+                u.volume = 0;
+                window.speechSynthesis.speak(u);
+            }
+        }, { once: true });
 
         // Safe helpers for feedback & Mascot UI
         function setMascotFeedback(msg) {
@@ -658,6 +684,7 @@
             userAnswers = {};
             reorderSelections = {};
             isAnswerRevealed = false;
+            isFinalCelebration = false;
             saveProgress();
             buildCalendar();
             loadExercise(1);
@@ -683,7 +710,6 @@
             document.getElementById('main-content-area').style.fontSize = mult;
         }
 
-        // --- STREAMING_CHUNK:Structuring calendar grid with cute animals... ---
         function buildCalendar() {
             const grid = document.getElementById('calendar-grid');
             grid.innerHTML = '';
@@ -741,7 +767,6 @@
             document.getElementById('exercise-title').textContent = ex.title;
             document.getElementById('exercise-tip').innerHTML = `<strong>💡 樂樂兔精讀小秘訣：</strong>${ex.tip}`;
 
-            // Reset action buttons based on whether answers are already revealed
             if (isAnswerRevealed) {
                 document.getElementById('check-btn').classList.add('hidden');
                 document.getElementById('next-btn').classList.remove('hidden');
@@ -792,12 +817,10 @@
         // --- AUDIO HELPERS FOR INDIVIDUAL QUESTIONS/SENTENCES ---
         function speakSelectedText(text) {
             const lang = document.getElementById('tts-lang').value;
-            // Clean placeholders for cleaner TTS speech
             const cleanText = text.replace(/（\s*\d+\s*）/g, " 括號 ").replace(/\[\s*\?\s*\]/g, " 括號 ");
             speakText(cleanText, lang);
         }
 
-        // --- STREAMING_CHUNK:Rendering cloze interactive options... ---
         // --- RENDER TYPE 1: CLOZE MCQs ---
         function renderClozeType(ex, workspace) {
             const container = document.createElement('div');
@@ -817,7 +840,6 @@
                 
                 const underlineColor = isAnswerRevealed ? "text-sky-600 border-sky-400 font-extrabold" : "text-sky-600 border-sky-400 font-black";
                 
-                // Add TTS audio speaker button right next to each question sentence
                 const textSpan = `
                     <div class="font-extrabold text-[#2D3748] flex-grow flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <span>${q.text} <span id="cloze-underline-${q.id}" class="${underlineColor} border-b-2 px-3 inline-block">${displayValue}</span></span>
@@ -890,7 +912,6 @@
             setMascotFeedback(`🐰 你的選擇是「${val}」，對不對？快填好其餘題目哦！`);
         }
 
-        // --- STREAMING_CHUNK:Rendering pairing line-by-line options... ---
         // --- RENDER TYPE 2: PAIRING SELECTS (Formatted line-by-line for 6, 7, 12) ---
         function renderPairingType(ex, workspace) {
             const container = document.createElement('div');
@@ -900,26 +921,21 @@
                 const card = document.createElement('div');
                 card.className = "p-5 rounded-2xl border-2 border-slate-100 bg-slate-50/50 space-y-4";
 
-                // Split paragraph text by newline to render each sentence on its own row
                 const textLines = q.text.split('\n');
-                
                 const randomizedPairOptions = shuffleArray(q.options);
-
-                // We keep track of the total number of dropdowns processed across lines
                 let totalSelectIdx = 0;
 
-                textLines.forEach((lineText, lineIdx) => {
+                textLines.forEach((lineText) => {
                     const lineRow = document.createElement('div');
                     lineRow.className = "py-2 border-b border-dashed border-sky-100 last:border-0 flex flex-wrap items-center justify-between gap-3 w-full";
 
-                    // Split this line by the bracket placeholders e.g. （ 0 ）
                     const lineSegments = lineText.split(/（\s*\d+\s*）/);
                     
                     const textSpanContainer = document.createElement('div');
                     textSpanContainer.className = "leading-loose text-slate-800 font-extrabold flex-grow";
 
                     if (textLines.length > 1) {
-                        // Multiline - render inline text directly
+                        // Inline elements
                     } else {
                         const numBadge = document.createElement('span');
                         numBadge.className = "bg-sky-500 text-white text-xs font-black rounded-full w-5 h-5 inline-flex items-center justify-center mr-2 align-middle";
@@ -980,7 +996,6 @@
 
                     lineRow.appendChild(textSpanContainer);
 
-                    // Add individual sentence TTS play button
                     const ttsBtn = document.createElement('button');
                     ttsBtn.className = "text-xs text-sky-600 bg-sky-50 border border-sky-200 px-2 py-1 rounded-full hover:bg-sky-100 font-bold flex items-center gap-1 flex-shrink-0 self-center";
                     const cleanedLineAudio = lineText.replace(/（\s*\d+\s*）/g, " 填空 ");
@@ -1011,7 +1026,6 @@
             }
         }
 
-        // --- STREAMING_CHUNK:Rendering punctuation inline flow... ---
         // --- RENDER TYPE 3: PUNCTUATION DROPBOXES ---
         function renderPunctuationType(ex, workspace) {
             const container = document.createElement('div');
@@ -1024,7 +1038,7 @@
                 let currentRowDiv = document.createElement('div');
                 currentRowDiv.className = "py-2 border-b border-dashed border-sky-100 last:border-0 flex flex-wrap items-center justify-between gap-3 w-full leading-loose text-slate-800 font-extrabold";
 
-                q.parts.forEach((p, pIdx) => {
+                q.parts.forEach((p) => {
                     if (p.text && p.text.includes('\n')) {
                         card.appendChild(currentRowDiv);
                         
@@ -1113,7 +1127,6 @@
             }
         }
 
-        // --- STREAMING_CHUNK:Rendering reordering words layout... ---
         // --- RENDER TYPE 4: REORDER WORD CARDS ---
         function renderReorderType(ex, workspace) {
             const container = document.createElement('div');
@@ -1274,13 +1287,12 @@
             renderReorderSelections(qId);
         }
 
-        // --- STREAMING_CHUNK:Rendering reading comprehension layout with text placed first... ---
         // --- RENDER TYPE 5: READING COMPREHENSIONS ---
         function renderReadingCompType(ex, workspace) {
             const container = document.createElement('div');
             container.className = "space-y-6";
 
-            // ARTICLE CARD FIRST (置頂讀物)
+            // ARTICLE CARD FIRST
             const pCard = document.createElement('div');
             pCard.className = "p-5 bg-gradient-to-br from-sky-50/50 to-blue-50/30 border-2 border-sky-200 rounded-3xl space-y-3";
             pCard.innerHTML = `
@@ -1366,31 +1378,6 @@
             setMascotFeedback(`🐰 我也覺得答案是「${val}」，你真學問高深！`);
         }
 
-        function clearCurrentDayAnswers() {
-            playSound('click');
-            const ex = exercises[currentDay];
-            if (!ex) return;
-
-            const savePrefix = `${currentDay}_`;
-            Object.keys(userAnswers).forEach(key => {
-                if (key.startsWith(savePrefix)) {
-                    delete userAnswers[key];
-                }
-            });
-
-            if (ex.type === "reorder") {
-                ex.questions.forEach(q => {
-                    reorderSelections[q.id] = [];
-                });
-            }
-
-            isAnswerRevealed = false; // Reset lock
-            loadExercise(currentDay);
-            setMascotExpression('neutral');
-            setMascotFeedback("🐰 所有的空格和重組都清除好了，重新寫一次試試看吧！");
-        }
-
-        // --- STREAMING_CHUNK:Validating submitted answers and handling Direct Reveal... ---
         // --- SUBMIT AND VALIDATE ANSWER SCHEMES ---
         function validateAnswers() {
             const ex = exercises[currentDay];
@@ -1416,7 +1403,6 @@
                         const userArr = q.answers.map((_, i) => ansMap[i] || "");
                         let localValid = true;
                         
-                        // Check if all slots are filled
                         if (userArr.includes("")) {
                             isDayCorrect = false;
                             localValid = false;
@@ -1483,12 +1469,11 @@
                 });
             }
 
-            // REVEAL LOGIC UPDATE
-            isAnswerRevealed = true; // Lock interactive states immediately on checking
-            loadExercise(currentDay); // Reload workspace to apply locking/coloring classes
+            // Lock interactives immediately
+            isAnswerRevealed = true;
+            loadExercise(currentDay); 
 
             if (isDayCorrect || correctCount === questionsCount) {
-                // CORRECT
                 playSound('correct');
                 setMascotExpression('happy');
                 progress[currentDay] = true;
@@ -1499,7 +1484,6 @@
                 const praise = "答對了，做得好！";
                 speakText(praise, lang);
 
-                // Show modal overlay
                 triggerConfetti();
                 showModal("答對了，做得好！🌟", `你順利完成了第 ${currentDay} 天的中文精讀大挑戰！獲得了一顆金星！樂樂兔為你驕傲！`);
 
@@ -1507,7 +1491,6 @@
                 document.getElementById('next-btn').classList.remove('hidden');
                 document.getElementById('status-message').classList.remove('hidden');
             } else {
-                // WRONG - No try again dialog, immediately reveal correct states
                 playSound('wrong');
                 setMascotExpression('sad');
 
@@ -1536,7 +1519,6 @@
             }
         }
 
-        // --- STREAMING_CHUNK:Implementing Text to Speech controls... ---
         // --- TTS SPEAKER MECHANISM WITH ROBUST IPHONE MANDARIN VOICE DETECT ---
         function speakCurrentQuestion() {
             const ex = exercises[currentDay];
@@ -1545,6 +1527,7 @@
             speakText(ex.audioText, lang);
         }
 
+        // Dedicated helper to clean speech outputs on iOS
         function speakMascotFeedback() {
             const feedback = document.getElementById('lele-feedback').textContent;
             const lang = document.getElementById('tts-lang').value;
@@ -1564,19 +1547,19 @@
 
             const voices = window.speechSynthesis.getVoices();
             
-            // Advanced voice matching designed to prevent iPhone/iOS falling back to local accent (Cantonese)
+            // Advanced voice matching designed to prevent iPhone/iOS falling back to Cantonese
             let bestVoice = null;
             if (lang === 'zh-CN') {
                 bestVoice = voices.find(v => {
                     const name = v.name.toLowerCase();
                     const vLang = v.lang.toLowerCase();
-                    return (vLang.includes('zh-cn') || vLang.includes('zh-chs') || vLang.includes('zh-hans') || name.includes('tingting') || name.includes('mandarin') || name.includes('putonghua') || name.includes('yating'));
+                    return (vLang === 'zh-cn' || vLang === 'zh-hans-cn' || name.includes('tingting') || name.includes('liting') || name.includes('mainland') || name.includes('putonghua') || name.includes('xiaoxiao'));
                 });
             } else if (lang === 'zh-HK') {
                 bestVoice = voices.find(v => {
                     const name = v.name.toLowerCase();
                     const vLang = v.lang.toLowerCase();
-                    return (vLang.includes('zh-hk') || vLang.includes('zh-cht') || vLang.includes('zh-hant') || name.includes('cantonese') || name.includes('sinji') || name.includes('sin-ji') || name.includes('hong kong'));
+                    return (vLang === 'zh-hk' || vLang === 'zh-hant-hk' || name.includes('sin-ji') || name.includes('sinji') || name.includes('cantonese') || name.includes('hong kong'));
                 });
             }
 
@@ -1588,11 +1571,14 @@
                 utterance.voice = bestVoice;
             }
 
-            // Kid-friendly tone
+            // Kid-friendly tone parameters
             utterance.pitch = 1.25;
             utterance.rate = 0.95;
 
-            window.speechSynthesis.speak(utterance);
+            // Tiny timeout avoids SpeechSynthesis lock up in Safari iOS
+            setTimeout(() => {
+                window.speechSynthesis.speak(utterance);
+            }, 50);
         }
 
         // --- DYNAMIC SVG LELE RABBIT FIVE-SENSES RENDER ---
@@ -1612,7 +1598,6 @@
                 eyesGroup.innerHTML = `
                     <path d="M 40 80 L 52 88" stroke="#2D3748" stroke-width="5" stroke-linecap="round" />
                     <path d="M 80 80 L 68 88" stroke="#2D3748" stroke-width="5" stroke-linecap="round" />
-                    <!-- Tear Drop -->
                     <path d="M 43 90 Q 41 98 45 98 Q 49 98 47 90 Z" fill="#63B3ED" />
                     <path d="M 77 90 Q 75 98 79 98 Q 83 98 81 90 Z" fill="#63B3ED" />
                 `;
@@ -1621,7 +1606,6 @@
                 `;
             } else if (state === 'thinking') {
                 eyesGroup.innerHTML = `
-                    <!-- Blinking one eye winking -->
                     <circle cx="48" cy="84" r="5" fill="#2D3748" />
                     <circle cx="72" cy="84" r="5" fill="#2D3748" />
                     <circle cx="46" cy="82" r="1.8" fill="white" />
@@ -1631,7 +1615,6 @@
                     <circle cx="60" cy="94" r="4.5" fill="none" stroke="#2D3748" stroke-width="3" />
                 `;
             } else {
-                // Neutral default cute look
                 eyesGroup.innerHTML = `
                     <circle cx="48" cy="84" r="5" fill="#2D3748" />
                     <circle cx="72" cy="84" r="5" fill="#2D3748" />
